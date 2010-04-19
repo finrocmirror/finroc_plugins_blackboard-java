@@ -65,7 +65,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         Method2Handler<BlackboardBuffer, Long, Integer>,
         Void2Handler<Integer, BlackboardBuffer>,
         Method3Handler<BlackboardBuffer, Integer, Integer, Integer>,
-        Void1Handler, Method0Handler<Byte> {
+            Void1Handler, Method0Handler<Byte> {
 
     /** read port */
     public PortBase readPort;
