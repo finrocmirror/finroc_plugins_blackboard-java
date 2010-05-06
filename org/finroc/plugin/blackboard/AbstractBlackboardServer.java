@@ -155,7 +155,8 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      * @param category Blackboard category (see constants in BlackboardManager)
      * @param flags Flags for blackboard
      */
-    public AbstractBlackboardServer(String bbName, int category, int flags, @CppDefault("NULL") FrameworkElement parent) {
+    @JavaOnly
+    private AbstractBlackboardServer(String bbName, int category, int flags, @CppDefault("NULL") FrameworkElement parent) {
         super(bbName, parent == null ? BlackboardManager.getInstance().getCategory(category) : parent, flags);
         myCategory = BlackboardManager.getInstance().getCategory(category);
         categoryIndex = category;
