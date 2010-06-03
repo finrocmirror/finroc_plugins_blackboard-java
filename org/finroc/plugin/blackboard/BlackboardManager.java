@@ -35,13 +35,15 @@ import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SizeT;
 import org.finroc.jc.container.SafeConcurrentlyIterableList;
-import org.finroc.jc.container.SimpleList;
+import org.finroc.jc.container.SimpleListWithMutex;
 import org.finroc.jc.thread.ThreadUtil;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
+import org.finroc.core.LockOrderLevels;
 import org.finroc.core.RuntimeEnvironment;
 import org.finroc.core.RuntimeListener;
 import org.finroc.core.plugin.Plugins;
+import org.finroc.core.port.PortCreationInfo;
 import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfacePort;
 import org.finroc.core.port.std.PortBase;
@@ -96,7 +98,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
          * @param Default flags for AbstractBlackboardServers in this category
          */
         BlackboardCategory(String categoryName, int defaultFlags) {
-            super(categoryName, BlackboardManager.this);
+            super(categoryName, BlackboardManager.this, defaultFlags, -1);
             this.defaultFlags = defaultFlags;
         }
 
@@ -171,7 +173,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
     private SafeConcurrentlyIterableList<RawBlackboardClient> bbClients = new SafeConcurrentlyIterableList<RawBlackboardClient>(10, 4);
 
     /** Clients that wish to autoconnect */
-    private SimpleList<RawBlackboardClient> autoConnectClients = new SimpleList<RawBlackboardClient>();
+    private SimpleListWithMutex<RawBlackboardClient> autoConnectClients = new SimpleListWithMutex<RawBlackboardClient>(LockOrderLevels.INNER_MOST - 50);
 
     private BlackboardManager() {
         super(NAME, RuntimeEnvironment.getInstance());
@@ -196,14 +198,16 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
     /**
      * Synchronized helper method
      */
-    private synchronized static void createBlackboardManager() {
-        if (instance == null) {
-            instance = new BlackboardManager();
-            RuntimeEnvironment.getInstance().addListener(instance);
+    private static void createBlackboardManager() {
+        synchronized (RuntimeEnvironment.getInstance().getRegistryLock()) {
+            if (instance == null) {
+                instance = new BlackboardManager();
+                RuntimeEnvironment.getInstance().addListener(instance);
 
-            // TODO do this properly
-            Plugins.getInstance().addPlugin(new BlackboardPlugin());
-            ////Cpp core::Plugins::getInstance()->addPlugin(new Blackboard2Plugin());
+                // TODO do this properly
+                Plugins.getInstance().addPlugin(new BlackboardPlugin());
+                ////Cpp core::Plugins::getInstance()->addPlugin(new Blackboard2Plugin());
+            }
         }
     }
 
@@ -381,9 +385,9 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
     @Override
     public void runtimeChange(byte changeType, FrameworkElement element) {
 
-        if (/*changeType == RuntimeListener.ADD ||*/ changeType == RuntimeListener.REMOVE || changeType == RuntimeListener.PRE_INIT) {
+        if (changeType == RuntimeListener.ADD /*|| changeType == RuntimeListener.REMOVE || changeType == RuntimeListener.PRE_INIT*/) {
 
-            // Is this a remote blackboard?
+            // Is this a remote blackboard? -> Create proxy
             if (element.getFlag(PortFlags.NETWORK_ELEMENT) && element.getFlag(PortFlags.IS_PORT)) {
                 element.getQualifiedLink(tempBuffer);
                 String qname = tempBuffer.toString();
@@ -394,42 +398,23 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
                 if (name.length() > 0) {
                     AbstractBlackboardServer info = getBlackboard(name, REMOTE, null);
 
-                    if (changeType == RuntimeListener.PRE_INIT) {
-
-                        // okay create/this blackboard
-                        boolean add = (info == null);
-                        if (add) {
-                            info = new RemoteBlackboardServer(name);
-                        }
-                        if (read) {
-                            assert(info.readPort == null);
-                            info.readPort = (PortBase)element;
-                            info.readPort.link(info, READ_PORT_NAME);
-                        } else if (write) {
-                            assert(info.writePort == null);
-                            info.writePort = (InterfacePort)element;
-                            info.writePort.link(info, WRITE_PORT_NAME);
-                        }
-                        if (add) {
-                            info.init();
-                        }
-                        checkAutoConnect(info);
-
-                    } else if (changeType == RuntimeListener.REMOVE) {
-
-                        // okay delete this blackboard
-                        assert(info != null) : "Remote Blackboard deleted that was never created";
-                        if (read) {
-                            assert(info.readPort != null);
-                            info.readPort = null;
-                        } else if (write) {
-                            assert(info.writePort != null);
-                            info.writePort = null;
-                        }
-                        if (info.readPort == null && info.writePort == null) {
-                            info.managedDelete();
-                        }
+                    // okay create blackboard proxy
+                    boolean add = (info == null);
+                    if (add) {
+                        info = new RemoteBlackboardServer(name);
                     }
+                    if (read && info.readPort == null) {
+                        PortBase port = (PortBase)element;
+                        info.readPort = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType()));
+                        info.init();
+                        info.readPort.connectToSource(qname);
+                    } else if (write && info.writePort == null) {
+                        InterfacePort port = (InterfacePort)element;
+                        info.writePort = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing);
+                        info.init();
+                        info.writePort.connectToSource(qname);
+                    }
+                    checkAutoConnect(info);
                 }
             }
         }

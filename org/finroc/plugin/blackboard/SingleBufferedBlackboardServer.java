@@ -30,6 +30,7 @@ import org.finroc.jc.annotation.PassLock;
 import org.finroc.jc.annotation.Ptr;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
+import org.finroc.core.LockOrderLevels;
 import org.finroc.core.port.AbstractPort;
 import org.finroc.core.port.PortCreationInfo;
 import org.finroc.core.port.PortFlags;
@@ -137,10 +138,10 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
      */
     public SingleBufferedBlackboardServer(String description, DataType type, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared) {
         super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
-        readPort = new BBReadPort(new PortCreationInfo("read", this, type, PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)));
+        readPort = new BBReadPort(new PortCreationInfo("read", this, type, PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
         readPort.setPullRequestHandler(this);
         checkType(type);
-        write = new InterfaceServerPort("write", this, type.getRelatedType(), this, shared ? CoreFlags.SHARED : 0);
+        write = new InterfaceServerPort("write", this, type.getRelatedType(), this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
         writePort = write;
         buffer = (BlackboardBuffer)write.getUnusedBuffer(type);
         buffer.getManager().getCurrentRefCounter().setLocks((byte)1);
@@ -164,7 +165,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 
     @Override
     protected void asynchChange(int offset, BlackboardBuffer buf, boolean checkLock) {
-        synchronized (this) {
+        synchronized (writePort) {
             if (checkLock && isLocked()) {
                 checkCurrentLock();
                 if (isLocked()) {
@@ -187,7 +188,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 
     @Override
     protected void keepAlive(int lockId) {
-        synchronized (this) {
+        synchronized (writePort) {
             if (locks != 0 && this.lockId == lockId) {
                 lastKeepAlive = Time.getCoarse();
             }
@@ -356,7 +357,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 //
 
     /** Check if lock timed out (only call in synchronized/exclusive access context) */
-    @PassLock("this")
+    @PassLock("writePort")
     private void checkCurrentLock() {
         if (isLocked() && Time.getCoarse() > lastKeepAlive + UNLOCK_TIMEOUT) {
             System.out.println("Blackboard server: Lock timed out... unlocking");
@@ -370,6 +371,11 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 
             newBufferRevision(true);
             locks = 0;
+
+            boolean p = processPendingCommands();
+            if ((!p) && (!isLocked())) {
+                super.processPendingAsynchChangeTasks();
+            }
         }
     }
 //
@@ -443,7 +449,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 //      locked.getBuffer().put(offset, buffer.getBuffer(), 0, buffer.getSize());
 //  }
 
-    @PassLock("this")
+    @PassLock("writePort")
     private void newBufferRevision(boolean hasChanges) {
         lockId = lockIDGen.incrementAndGet();
         if (hasChanges) {
@@ -452,7 +458,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 
         // process any waiting asynch change commands
         processPendingAsynchChangeTasks();
-        if (threadWaitingForCopy || readPort.getStrategy() > 0 ) {
+        if (threadWaitingForCopy || readPort.getStrategy() > 0) {
             updateReadCopy();
         }
     }
@@ -468,7 +474,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
      *
      * @param minRevision minimal revision we want to receive
      */
-    @PassLock("this")
+    @PassLock("writePort")
     private void waitForReadCopy(long minRevision, long timeout) {
         long curTime = Time.getCoarse();
         while (readCopyRevision < minRevision) {
@@ -476,7 +482,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
             if (waitFor > 0) {
                 threadWaitingForCopy = true;
                 try {
-                    wait(waitFor);
+                    writePort.wait(waitFor);
                 } catch (InterruptedException e) {
                     System.out.println("SingleBufferedBlackboardServer: Interrupted while waiting for read copy - strange");
                     //e.printStackTrace();
@@ -488,7 +494,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
     /**
      * Make a copy for the read port - and hand it to anyone who is interested
      */
-    @PassLock("this")
+    @PassLock("writePort")
     private void updateReadCopy() {
         assert(buffer.getManager().isLocked());
 
@@ -516,7 +522,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
         if (threadWaitingForCopy) {
             threadWaitingForCopy = false;
             wakeupThread = -1;
-            this.notifyAll();
+            writePort.notifyAll();
         }
 
     }
@@ -525,7 +531,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
     // provides blocking access to blackboard (without copying)
     public PortData pullRequest(PortBase origin, byte addLocks) {
 
-        synchronized (this) {
+        synchronized (writePort) {
 
             // possibly wait for a copy
             while (readCopyRevision < revision) {  // not so clean, but everything else becomes rather complicated
@@ -550,7 +556,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
             return;
         }
 
-        synchronized (this) {
+        synchronized (writePort) {
             checkCurrentLock();
         }
     }
@@ -561,7 +567,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
             return;
         }
 
-        synchronized (this) {
+        synchronized (writePort) {
 
             assert(newBuffer != buffer);
 
@@ -587,7 +593,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
     @Override
     protected BlackboardBuffer readLock(long timeout) throws MethodCallException {
 
-        synchronized (this) {
+        synchronized (writePort) {
 
             // Read Lock
             long currentRevision = revision;
@@ -633,7 +639,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 
     @Override
     protected BlackboardBuffer readPart(int offset, int length, int timeout) throws MethodCallException {
-        synchronized (this) {
+        synchronized (writePort) {
             @Const BlackboardBuffer bb = buffer;
             boolean unlock = false;
             long currentRevision = revision;
@@ -677,7 +683,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 
     @Override
     protected BlackboardBuffer writeLock(long timeout) {
-        synchronized (this) {
+        synchronized (writePort) {
             if (isLocked() || pendingTasks()) {
                 checkCurrentLock();
                 if (isLocked() || pendingTasks()) {
@@ -713,7 +719,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
             return; // not interested, since it's a copy
         }
 
-        synchronized (this) {
+        synchronized (writePort) {
             if (this.lockId != lockId) {
                 System.out.println("Skipping outdated unlock");
                 return;
@@ -738,7 +744,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
         }
         assert(buf.lockID >= 0) : "lock IDs < 0 are typically only found in read copies";
 
-        synchronized (this) {
+        synchronized (writePort) {
             if (this.lockId != buf.lockID) {
                 System.out.println("Skipping outdated unlock");
                 buf.getManager().releaseLock();
@@ -787,7 +793,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
             // case 3: publish will happen anyway - since strategy is > 0
 
             // case 2: make read copy
-            synchronized (this) {
+            synchronized (writePort) {
                 if (locks >= 0) { // ok, not locked or read locked
                     locks++;
                     updateReadCopy();

@@ -248,7 +248,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
             return false;
         }
         if (isConnected()) {
-            return true; // alredy connected
+            return true; // already connected
         }
         if (autoConnectCategory >= 0 && autoConnectCategory != server.categoryIndex) {
             return false; // wrong category
@@ -341,7 +341,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
      * (if connection is broken, there's no guarantee that this will work or that an exception is thrown otherwise)
      *
      * @param offset Offset in byte in blackboard
-     * @param changeBuf Contents to write to this position (unlocked buffer retrieved via getUnusedBuffer OR a used buffer with a lock)
+     * @param changeBuf Contents to write to this position (unlocked buffer retrieved via getUnusedBuffer OR a used buffer with an additional lock)
      */
     public void commitAsynchChange(int offset, @Const BlackboardBuffer changeBuf) throws MethodCallException {
         if (changeBuf.getManager().isUnused()) {
@@ -554,12 +554,14 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     /**
      * Directly commit/publish buffer - without lock
      *
-     * @param buffer Buffer to publish
+     * @param buffer Buffer to publish (unlocked buffer retrieved via getUnusedBuffer OR a used buffer with an additional lock)
      */
     @SuppressWarnings("unchecked")
     public void publish(BlackboardBuffer buffer) {
         assert(lockType == LockType.NONE);
-        assert(buffer.getManager().isUnused());
+        if (buffer.getManager().isUnused()) {
+            buffer.getManager().getCurrentRefCounter().setLocks((byte)1);
+        }
         try {
             AbstractBlackboardServer.DIRECT_COMMIT.call(writePort, buffer, true);
         } catch (MethodCallException e) {

@@ -30,6 +30,7 @@ import org.finroc.jc.annotation.PassLock;
 import org.finroc.jc.annotation.Ptr;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
+import org.finroc.core.LockOrderLevels;
 import org.finroc.core.port.PortCreationInfo;
 import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfaceServerPort;
@@ -110,9 +111,9 @@ public class BlackboardServer extends AbstractBlackboardServer {
      */
     public BlackboardServer(String description, DataType type, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared) {
         super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
-        readPort = new Port<BlackboardBuffer>(new PortCreationInfo("read", this, type, PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)));
+        readPort = new Port<BlackboardBuffer>(new PortCreationInfo("read", this, type, PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
         checkType(type);
-        write = new InterfaceServerPort("write", this, type.getRelatedType(), this, shared ? CoreFlags.SHARED : 0);
+        write = new InterfaceServerPort("write", this, type.getRelatedType(), this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
         writePort = write;
         locked = null;
         setPublished((BlackboardBuffer)readPort.getDefaultBufferRaw());
@@ -129,7 +130,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
 
     @Override
     protected void asynchChange(int offset, BlackboardBuffer buf, boolean checkLock) {
-        synchronized (this) {
+        synchronized (writePort) {
             if (checkLock && locked != null) {
                 checkCurrentLock();
                 if (locked != null) { // ok, we don't get lock now... defer command to next unlock
@@ -157,7 +158,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
 
     @Override
     protected void keepAlive(int lockId) {
-        synchronized (this) {
+        synchronized (writePort) {
             if (locked != null && this.lockId == lockId) {
                 lastKeepAlive = Time.getCoarse();
             }
@@ -328,7 +329,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
     /**
      * Check if lock timed out (only call in synchronized/exclusive access context)
      */
-    @PassLock("this")
+    @PassLock("writePort")
     private void checkCurrentLock() {
         if (locked != null && Time.getCoarse() > lastKeepAlive + UNLOCK_TIMEOUT) {
             System.out.println("Blackboard server: Lock timed out... unlocking");
@@ -336,8 +337,8 @@ public class BlackboardServer extends AbstractBlackboardServer {
             lockId = lockIDGen.incrementAndGet();
             locked = null;
             System.out.println("Thread " + Thread.currentThread().toString() + ": lock = null");
-            processPendingCommands();
-            if (!isLocked()) {
+            boolean p = processPendingCommands();
+            if ((!p) && (!isLocked())) {
                 super.processPendingAsynchChangeTasks();
             }
         }
@@ -426,7 +427,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
             return;
         }
 
-        synchronized (this) {
+        synchronized (writePort) {
             checkCurrentLock();
         }
     }
@@ -437,7 +438,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
             return;
         }
 
-        synchronized (this) {
+        synchronized (writePort) {
             if (locked != null) { // note: current lock is obsolete, since we have a completely new buffer
                 //lockID = lockIDGen.incrementAndGet(); // make sure, next unlock won't do anything => done in commitLocked()
                 locked.getManager().releaseLock(); // discard current lock
@@ -492,7 +493,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
 
     @Override
     protected BlackboardBuffer writeLock(long timeout) {
-        synchronized (this) {
+        synchronized (writePort) {
             if (locked != null || pendingTasks()) { // make sure lock command doesn't "overtake" others
                 checkCurrentLock();
                 if (locked != null || pendingTasks()) {
@@ -534,7 +535,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
             return;
         }
 
-        synchronized (this) {
+        synchronized (writePort) {
             if (this.lockId != buf.lockID) {
                 System.out.println("Skipping outdated unlock");
                 buf.getManager().releaseLock();

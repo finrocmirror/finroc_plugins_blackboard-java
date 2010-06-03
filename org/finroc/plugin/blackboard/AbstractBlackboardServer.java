@@ -157,7 +157,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      */
     @JavaOnly
     private AbstractBlackboardServer(String bbName, int category, int flags, @CppDefault("NULL") FrameworkElement parent) {
-        super(bbName, parent == null ? BlackboardManager.getInstance().getCategory(category) : parent, flags);
+        super(bbName, parent == null ? BlackboardManager.getInstance().getCategory(category) : parent, flags, -1);
         myCategory = BlackboardManager.getInstance().getCategory(category);
         categoryIndex = category;
     }
@@ -206,7 +206,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         return task;
     }
 
-    //Cpp finroc::util::Lock* curlock;
+    ////Cpp finroc::util::Lock* curlock;
 
     /**
      * Wait to receive lock on blackboard for specified amount of time
@@ -215,7 +215,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      * @param timeout Time to wait for lock
      * @return Do we have a lock now? (or did rather timeout expire?)
      */
-    @PassLock("this")
+    @PassLock("writePort")
     protected boolean waitForLock(/*@Const AbstractMethod method,*/ long timeout) {
         BlackboardTask task = getUnusedBlackboardTask();
         //task.method = method;
@@ -224,14 +224,17 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         long startTime = Time.getCoarse();
         //long curTime = startTime;
         long waitFor = timeout;
+        //System.out.println(createThreadString() + ": waiting " + timeout + " ms for lock");
         while (waitFor > 0) {
             try {
-                wait(waitFor);
+                //System.out.println(createThreadString() + ": entered wait");
+                writePort.wait(waitFor);
             } catch (InterruptedException e) {
                 //e.printStackTrace();
                 System.out.println("Wait interrupted in AbstractBlackboardServer - shouldn't happen... usually");
             }
             waitFor = timeout - (Time.getCoarse() - startTime);
+            //System.out.println(createThreadString() + ": left wait; waitFor = " + waitFor + "; wakeupThread = " + wakeupThread);
             if (wakeupThread == ThreadUtil.getCurrentThreadId()) {
                 // ok, it's our turn now
                 pendingMajorTasks.removeElem(task);
@@ -243,10 +246,18 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         }
 
         // ok, time seems to have run out - we have synchronized context though - so removing task is safe
+        //System.out.println(createThreadString() + ": time has run out; isLocked() = " + isLocked());
         pendingMajorTasks.removeElem(task);
         task.recycle2();
         assert(isLocked()) : "Somebody forgot thread waiting on blackboard";
         return false;
+    }
+
+    /**
+     * @return Thread string (debug helper method)
+     */
+    protected String createThreadString() {
+        return "Thread " + Thread.currentThread().toString() + " (" + ThreadUtil.getCurrentThreadId() + ")";
     }
 
     /**
@@ -257,16 +268,22 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     /**
      * Execute any pending tasks
      * (may only be called as last statement in synchronized context - and when there's no lock)
+     *
+     * @return Were there any pending commands that are (were) now executed?
      */
-    @PassLock("this")
-    protected void processPendingCommands() {
+    @PassLock("writePort")
+    protected boolean processPendingCommands() {
+        //System.out.println(createThreadString() + ": process pending commands");
         if (pendingMajorTasks.size() == 0) {
-            return;
+            //System.out.println(createThreadString() + ": nothing to do");
+            return false;
         }
         assert(wakeupThread == -1);
         BlackboardTask nextTask = pendingMajorTasks.remove(0);
         wakeupThread = nextTask.threadUid;
-        notifyAll();
+        //System.out.println(createThreadString() + ": waking up thread " + wakeupThread);
+        writePort.notifyAll();
+        return true;
     }
 
     /**
