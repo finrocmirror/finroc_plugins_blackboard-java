@@ -21,6 +21,7 @@
  */
 package org.finroc.plugin.blackboard;
 
+import org.finroc.jc.MutexLockOrderWithMonitor;
 import org.finroc.jc.Time;
 import org.finroc.jc.annotation.AtFront;
 import org.finroc.jc.annotation.Const;
@@ -37,6 +38,7 @@ import org.finroc.jc.annotation.Superclass;
 import org.finroc.jc.container.SimpleList;
 import org.finroc.jc.thread.ThreadUtil;
 import org.finroc.core.FrameworkElement;
+import org.finroc.core.LockOrderLevels;
 import org.finroc.core.port.rpc.InterfacePort;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.rpc.method.AbstractMethod;
@@ -66,6 +68,9 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         Void2Handler<Integer, BlackboardBuffer>,
         Method3Handler<BlackboardBuffer, Integer, Integer, Integer>,
             Void1Handler, Method0Handler<Byte> {
+
+    /** Lock for blackboard operation (needs to be deeper than runtime - (for initial pushes etc.)) */
+    public MutexLockOrderWithMonitor bbLock = new MutexLockOrderWithMonitor(LockOrderLevels.INNER_MOST - 1000);
 
     /** read port */
     public PortBase readPort;
@@ -167,11 +172,13 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     }
 
     protected synchronized void prepareDelete() {
-        if (BlackboardManager.getInstance() != null) { // we don't need to remove it, if blackboard manager has already been deleted
-            myCategory.remove(this);
-        }
+        synchronized (bbLock) {
+            if (BlackboardManager.getInstance() != null) { // we don't need to remove it, if blackboard manager has already been deleted
+                myCategory.remove(this);
+            }
 
-        clearAsyncChangeTasks();
+            clearAsyncChangeTasks();
+        }
     }
 
     /**
@@ -215,7 +222,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      * @param timeout Time to wait for lock
      * @return Do we have a lock now? (or did rather timeout expire?)
      */
-    @PassLock("writePort")
+    @PassLock("bbLock")
     protected boolean waitForLock(/*@Const AbstractMethod method,*/ long timeout) {
         BlackboardTask task = getUnusedBlackboardTask();
         //task.method = method;
@@ -228,7 +235,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         while (waitFor > 0) {
             try {
                 //System.out.println(createThreadString() + ": entered wait");
-                writePort.wait(waitFor);
+                bbLock.wait(waitFor);
             } catch (InterruptedException e) {
                 //e.printStackTrace();
                 System.out.println("Wait interrupted in AbstractBlackboardServer - shouldn't happen... usually");
@@ -271,7 +278,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      *
      * @return Were there any pending commands that are (were) now executed?
      */
-    @PassLock("writePort")
+    @PassLock("bbLock")
     protected boolean processPendingCommands() {
         //System.out.println(createThreadString() + ": process pending commands");
         if (pendingMajorTasks.size() == 0) {
@@ -282,7 +289,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         BlackboardTask nextTask = pendingMajorTasks.remove(0);
         wakeupThread = nextTask.threadUid;
         //System.out.println(createThreadString() + ": waking up thread " + wakeupThread);
-        writePort.notifyAll();
+        bbLock.notifyAll();
         return true;
     }
 
