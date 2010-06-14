@@ -32,9 +32,11 @@ import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.PassLock;
 import org.finroc.jc.annotation.Ptr;
+import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SizeT;
 import org.finroc.jc.annotation.Struct;
 import org.finroc.jc.annotation.Superclass;
+import org.finroc.jc.annotation.Virtual;
 import org.finroc.jc.container.SimpleList;
 import org.finroc.jc.thread.ThreadUtil;
 import org.finroc.core.FrameworkElement;
@@ -484,5 +486,18 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     public void handleVoidCall(AbstractMethod method, Integer p1, @Const BlackboardBuffer p2) throws MethodCallException {
         assert(method == ASYNCH_CHANGE);
         asynchChange(p1, p2, true);
+    }
+
+    /**
+     * (Only works in C++)
+     * Retrieve size information for blackboard
+     */
+    @Virtual
+    public void getSizeInfo(@SizeT @Ref int elementSize, @SizeT @Ref int elements, @SizeT @Ref int capacity) {
+        @Const BlackboardBuffer buf = (BlackboardBuffer)readPort.getLockedUnsafeRaw();
+        elementSize = buf.getElementSize();
+        elements = buf.getElements();
+        capacity = buf.getBbCapacity();
+        buf.getManager().releaseLock();
     }
 }

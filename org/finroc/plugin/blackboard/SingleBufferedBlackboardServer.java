@@ -771,6 +771,39 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
         }
     }
 
+    @Override
+    public void getSizeInfo(int elementSize, int elements, int capacity) {
+
+        // ok... three cases... 1) up to date copy  2) no lock  3) lock
+
+        // case 1: get buffer from superclass
+        if (readCopyRevision == revision) {
+            @Const BlackboardBuffer bb = (BlackboardBuffer)readPort.getLockedUnsafeRaw();
+            elementSize = bb.getElementSize();
+            elements = bb.getElements();
+            capacity = bb.getBbCapacity();
+            bb.getManager().releaseLock();
+            return;
+        }
+
+        // case 2/3: okay... wait until blackboard has no lock (could be implemented more sophisticated, but that shouldn't matter here...)
+        while (true) {
+            synchronized (bbLock) {
+                if (locks >= 0) { // ok, not locked or read locked
+                    elementSize = buffer.getElementSize();
+                    elements = buffer.getElements();
+                    capacity = buffer.getBbCapacity();
+                    return;
+                }
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {}
+            }
+        }
+
+
+    }
+
     /** Special read port for blackboard buffer */
     class BBReadPort extends Port<BlackboardBuffer> {
 
