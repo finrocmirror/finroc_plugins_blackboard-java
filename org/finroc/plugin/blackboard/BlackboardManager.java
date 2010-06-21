@@ -405,7 +405,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
                     }
                     if (read && info.readPort == null) {
                         PortBase port = (PortBase)element;
-                        info.readPort = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType()));
+                        info.readPort = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), PortFlags.OUTPUT_PROXY));
                         info.init();
                         info.readPort.connectToSource(qname);
                     } else if (write && info.writePort == null) {

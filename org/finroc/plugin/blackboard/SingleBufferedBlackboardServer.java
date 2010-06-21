@@ -592,49 +592,56 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
 
     @Override
     protected BlackboardBuffer readLock(long timeout) throws MethodCallException {
-
         synchronized (bbLock) {
+            return readLockImpl(timeout);
+        }
+    }
 
-            // Read Lock
-            long currentRevision = revision;
+    /**
+     * Helper method for above to avoid nested/double lock
+     */
+    @PassLock("bbLock")
+    private BlackboardBuffer readLockImpl(long timeout) throws MethodCallException {
+
+        // Read Lock
+        long currentRevision = revision;
+        if (locks < 0 && currentRevision != readCopyRevision) {
+            checkCurrentLock();
             if (locks < 0 && currentRevision != readCopyRevision) {
-                checkCurrentLock();
-                if (locks < 0 && currentRevision != readCopyRevision) {
-                    if (timeout <= 0) {
-                        return null; // we do not need to enqueue lock commands with zero timeout
-                    }
-                    waitForReadCopy(currentRevision, timeout);
-                    assert(readCopyRevision >= currentRevision);
+                if (timeout <= 0) {
+                    return null; // we do not need to enqueue lock commands with zero timeout
                 }
+                waitForReadCopy(currentRevision, timeout);
+                assert(readCopyRevision >= currentRevision);
             }
+        }
 
-            if (readCopyRevision >= currentRevision) {
-                // there's a copy... use this
+        if (readCopyRevision >= currentRevision) {
+            // there's a copy... use this
+            readCopy.getManager().addLock();
+            return readCopy;
+        }
+
+        if (locks >= 0) {
+            // okay, we either have no lock or a read lock
+            if (pendingTasks() || threadWaitingForCopy) { // there are others waiting... make copy
+                updateReadCopy();
+                assert(readCopyRevision >= currentRevision);
                 readCopy.getManager().addLock();
                 return readCopy;
-            }
-
-            if (locks >= 0) {
-                // okay, we either have no lock or a read lock
-                if (pendingTasks() || threadWaitingForCopy) { // there are others waiting... make copy
-                    updateReadCopy();
-                    assert(readCopyRevision >= currentRevision);
-                    readCopy.getManager().addLock();
-                    return readCopy;
-                } else { // no one waiting... simply lock buffer
-                    if (locks == 0) { // if this is the first lock: increment and set lock id of buffer
-                        int lockIDNew = lockIDGen.incrementAndGet();
-                        lockId = lockIDNew;
-                        buffer.lockID = lockIDNew;
-                    }
-                    locks++;
-                    buffer.getManager().addLock();
-                    return buffer;
+            } else { // no one waiting... simply lock buffer
+                if (locks == 0) { // if this is the first lock: increment and set lock id of buffer
+                    int lockIDNew = lockIDGen.incrementAndGet();
+                    lockId = lockIDNew;
+                    buffer.lockID = lockIDNew;
                 }
+                locks++;
+                buffer.getManager().addLock();
+                return buffer;
             }
-
-            throw new MethodCallException(MethodCallException.Type.PROGRAMMING_ERROR);
         }
+
+        throw new MethodCallException(MethodCallException.Type.PROGRAMMING_ERROR);
     }
 
     @Override
@@ -643,6 +650,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
             @Const BlackboardBuffer bb = buffer;
             boolean unlock = false;
             long currentRevision = revision;
+            int locksCheck = 0;
             if (locks < 0 && currentRevision != readCopyRevision) {
                 checkCurrentLock();
                 if (locks < 0 && currentRevision != readCopyRevision) {
@@ -651,10 +659,12 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
                     }
 
                     // okay... we'll do a read lock
-                    bb = readLock(timeout);
+                    bb = readLockImpl(timeout);
                     if (bb == null) {
                         return null;
                     }
+                    locksCheck = locks;
+                    assert(locksCheck > 0);
                     unlock = true;
                 }
             }
@@ -672,7 +682,9 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
             send.elementSize = buffer.elementSize;
 
             if (unlock) { // if we have a read lock, we need to release it
-                readUnlock(lockId);
+                assert(locks == locksCheck);
+                readUnlockImpl(lockId);
+                assert(locks == locksCheck - 1);
             }
 
             // return buffer with one read lock
@@ -720,20 +732,32 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
         }
 
         synchronized (bbLock) {
-            if (this.lockId != lockId) {
-                System.out.println("Skipping outdated unlock");
-                return;
-            }
+            readUnlockImpl(lockId);
+        }
+    }
 
-            // okay, this is unlock for the current lock
-            assert(locks > 0);
-            locks--;
-            if (locks == 0) {
-                newBufferRevision(false);
-                processPendingCommands();
-            }
+    /**
+     * Helper method for above to avoid nested/double lock
+     */
+    @PassLock("bbLock")
+    private void readUnlockImpl(int lockId) throws MethodCallException {
+        if (lockId < 0) {
+            return; // not interested, since it's a copy
+        }
+
+        if (this.lockId != lockId) {
+            System.out.println("Skipping outdated unlock");
             return;
         }
+
+        // okay, this is unlock for the current lock
+        assert(locks > 0);
+        locks--;
+        if (locks == 0) {
+            newBufferRevision(false);
+            processPendingCommands();
+        }
+        return;
     }
 
     @Override
