@@ -28,6 +28,7 @@ import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassLock;
 import org.finroc.jc.annotation.Ptr;
+import org.finroc.log.LogLevel;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;
@@ -360,7 +361,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
     @PassLock("bbLock")
     private void checkCurrentLock() {
         if (isLocked() && Time.getCoarse() > lastKeepAlive + UNLOCK_TIMEOUT) {
-            System.out.println("Blackboard server: Lock timed out... unlocking");
+            log(LogLevel.LL_DEBUG, logDomain, "Blackboard server: Lock timed out... unlocking");
 
             // meh... we have a read or write lock... so a client may make changes to it... or may still read it... it's safer to create new buffer here
             BlackboardBuffer newBuffer = (BlackboardBuffer)readPort.getUnusedBufferRaw();
@@ -484,7 +485,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
                 try {
                     bbLock.wait(waitFor);
                 } catch (InterruptedException e) {
-                    System.out.println("SingleBufferedBlackboardServer: Interrupted while waiting for read copy - strange");
+                    log(LogLevel.LL_WARNING, logDomain, "SingleBufferedBlackboardServer: Interrupted while waiting for read copy - strange");
                     //e.printStackTrace();
                 }
             }
@@ -746,7 +747,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
         }
 
         if (this.lockId != lockId) {
-            System.out.println("Skipping outdated unlock");
+            log(LogLevel.LL_DEBUG, logDomain, "Skipping outdated unlock");
             return;
         }
 
@@ -763,14 +764,14 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
     @Override
     protected void writeUnlock(BlackboardBuffer buf) {
         if (buf == null) {
-            System.out.println("blackboard write unlock without providing buffer - you shouldn't do that - ignoring");
+            log(LogLevel.LL_WARNING, logDomain, "blackboard write unlock without providing buffer - you shouldn't do that - ignoring");
             return;
         }
         assert(buf.lockID >= 0) : "lock IDs < 0 are typically only found in read copies";
 
         synchronized (bbLock) {
             if (this.lockId != buf.lockID) {
-                System.out.println("Skipping outdated unlock");
+                log(LogLevel.LL_DEBUG, logDomain, "Skipping outdated unlock");
                 buf.getManager().releaseLock();
                 return;
             }

@@ -28,6 +28,7 @@ import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.CppType;
 import org.finroc.jc.annotation.Elems;
+import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.PassLock;
@@ -38,7 +39,10 @@ import org.finroc.jc.annotation.Struct;
 import org.finroc.jc.annotation.Superclass;
 import org.finroc.jc.annotation.Virtual;
 import org.finroc.jc.container.SimpleList;
+import org.finroc.jc.log.LogDefinitions;
 import org.finroc.jc.thread.ThreadUtil;
+import org.finroc.log.LogDomain;
+import org.finroc.log.LogLevel;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;
 import org.finroc.core.port.rpc.InterfacePort;
@@ -149,6 +153,10 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     @PassByValue public static Void1Method KEEP_ALIVE =
         new Void1Method(METHODS, "KeepAliveSignal", "Lock ID", false);
 
+    /** Log domain for this class */
+    @InCpp("_CREATE_NAMED_LOGGING_DOMAIN(logDomain, \"blackboard\");")
+    public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
+
     /**
      * @param bbName Blackboard name
      * @param category Blackboard category (see constants in BlackboardManager)
@@ -240,7 +248,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
                 bbLock.wait(waitFor);
             } catch (InterruptedException e) {
                 //e.printStackTrace();
-                System.out.println("Wait interrupted in AbstractBlackboardServer - shouldn't happen... usually");
+                log(LogLevel.LL_WARNING, logDomain, "Wait interrupted in AbstractBlackboardServer - shouldn't happen... usually");
             }
             waitFor = timeout - (Time.getCoarse() - startTime);
             //System.out.println(createThreadString() + ": left wait; waitFor = " + waitFor + "; wakeupThread = " + wakeupThread);

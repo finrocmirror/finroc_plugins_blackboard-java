@@ -25,9 +25,13 @@ import org.finroc.jc.AtomicInt;
 import org.finroc.jc.Time;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppDefault;
+import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassLock;
 import org.finroc.jc.annotation.Ptr;
+import org.finroc.jc.log.LogDefinitions;
+import org.finroc.log.LogDomain;
+import org.finroc.log.LogLevel;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;
@@ -332,11 +336,11 @@ public class BlackboardServer extends AbstractBlackboardServer {
     @PassLock("bbLock")
     private void checkCurrentLock() {
         if (locked != null && Time.getCoarse() > lastKeepAlive + UNLOCK_TIMEOUT) {
-            System.out.println("Blackboard server: Lock timed out... unlocking");
+            log(LogLevel.LL_DEBUG, logDomain, "Blackboard server: Lock timed out... unlocking");
             locked.getCurReference().getRefCounter().releaseLock();
             lockId = lockIDGen.incrementAndGet();
             locked = null;
-            System.out.println("Thread " + Thread.currentThread().toString() + ": lock = null");
+            log(LogLevel.LL_DEBUG, logDomain, "Thread " + Thread.currentThread().toString() + ": lock = null");
             boolean p = processPendingCommands();
             if ((!p) && (!isLocked())) {
                 super.processPendingAsynchChangeTasks();
@@ -465,7 +469,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
 
     @Override
     protected BlackboardBuffer readLock(long timeout) throws MethodCallException {
-        System.out.println("warning: Client must not attempt read lock on multi-buffered blackboard - Call failed");
+        log(LogLevel.LL_WARNING, logDomain, "warning: Client must not attempt read lock on multi-buffered blackboard - Call failed");
         throw new MethodCallException(MethodCallException.Type.INVALID_PARAM);
     }
 
@@ -524,20 +528,20 @@ public class BlackboardServer extends AbstractBlackboardServer {
 
     @Override
     protected void readUnlock(int lockId) throws MethodCallException {
-        System.out.println("warning: Client must not attempt read unlock on multi-buffered blackboard - Call failed");
+        log(LogLevel.LL_WARNING, logDomain, "warning: Client must not attempt read unlock on multi-buffered blackboard - Call failed");
         throw new MethodCallException(MethodCallException.Type.INVALID_PARAM);
     }
 
     @Override
     protected void writeUnlock(BlackboardBuffer buf) {
         if (buf == null) {
-            System.out.println("blackboard write unlock without providing buffer - strange indeed - ignoring");
+            log(LogLevel.LL_WARNING, logDomain, "blackboard write unlock without providing buffer - strange indeed - ignoring");
             return;
         }
 
         synchronized (bbLock) {
             if (this.lockId != buf.lockID) {
-                System.out.println("Skipping outdated unlock");
+                log(LogLevel.LL_DEBUG, logDomain, "Skipping outdated unlock");
                 buf.getManager().releaseLock();
                 return;
             }

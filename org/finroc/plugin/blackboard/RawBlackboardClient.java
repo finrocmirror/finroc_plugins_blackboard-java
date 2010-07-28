@@ -28,6 +28,7 @@ import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.Inline;
 import org.finroc.jc.annotation.JavaOnly;
+import org.finroc.log.LogLevel;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.port.AbstractPort;
 import org.finroc.core.port.PortCreationInfo;
@@ -416,7 +417,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
             try {
                 AbstractBlackboardServer.KEEP_ALIVE.call(writePort, curLockID, false);
             } catch (MethodCallException e) {
-                System.out.println("warning: Sending Keep-Alice failed");
+                log(LogLevel.LL_WARNING, logDomain, "warning: Sending Keep-Alive failed");
             }
         }
     }
@@ -509,7 +510,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     @SuppressWarnings("unchecked")
     public void unlock() {
         if (lockType == LockType.NONE) {
-            System.out.println("BlackboardClient warning: nothing to unlock");
+            log(LogLevel.LL_WARNING, logDomain, "BlackboardClient warning: nothing to unlock");
             curLockID = -1;
             lockType = LockType.NONE;
             locked = null;
@@ -524,8 +525,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
                 try {
                     AbstractBlackboardServer.READ_UNLOCK.call(writePort, curLockID, true);
                 } catch (MethodCallException e) {
-                    System.out.println("warning: Unlocking blackboard (read) failed");
-                    e.printStackTrace();
+                    log(LogLevel.LL_WARNING, logDomain, "warning: Unlocking blackboard (read) failed", e);
                 }
             }
             readLocked.getManager().releaseLock();
@@ -542,7 +542,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         try {
             AbstractBlackboardServer.UNLOCK.call(writePort, locked, true);
         } catch (MethodCallException e) {
-            System.out.println("warning: Unlocking blackboard failed");
+            log(LogLevel.LL_WARNING, logDomain, "warning: Unlocking blackboard failed");
             //e.printStackTrace();
         }
         locked = null;
@@ -565,7 +565,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         try {
             AbstractBlackboardServer.DIRECT_COMMIT.call(writePort, buffer, true);
         } catch (MethodCallException e) {
-            System.out.println("warning: Blackboard direct commit failed");
+            log(LogLevel.LL_WARNING, logDomain, "warning: Blackboard direct commit failed");
         }
     }
 
