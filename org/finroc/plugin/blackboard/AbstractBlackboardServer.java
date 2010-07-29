@@ -154,7 +154,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         new Void1Method(METHODS, "KeepAliveSignal", "Lock ID", false);
 
     /** Log domain for this class */
-    @InCpp("_CREATE_NAMED_LOGGING_DOMAIN(logDomain, \"blackboard\");")
+    @InCpp("_RRLIB_LOG_CREATE_NAMED_DOMAIN(logDomain, \"blackboard\");")
     public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
 
     /**
