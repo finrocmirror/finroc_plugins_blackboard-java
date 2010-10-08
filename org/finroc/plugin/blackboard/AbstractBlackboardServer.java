@@ -66,7 +66,7 @@ import org.finroc.core.port.std.PortBase;
 import org.finroc.core.portdatabase.DataType;
 
 /** Blackboard info */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 @Struct @AtFront @Ptr @Superclass( {FrameworkElement.class, AbstractMethodCallHandler.class})
 abstract class AbstractBlackboardServer extends FrameworkElement implements
         Method1Handler<BlackboardBuffer, Long>,

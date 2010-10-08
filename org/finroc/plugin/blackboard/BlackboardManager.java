@@ -25,11 +25,9 @@ import org.finroc.jc.ArrayWrapper;
 import org.finroc.jc.annotation.AtFront;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppDefault;
-import org.finroc.jc.annotation.CppInclude;
-import org.finroc.jc.annotation.ForwardDecl;
 import org.finroc.jc.annotation.Friend;
 import org.finroc.jc.annotation.InCppFile;
-import org.finroc.jc.annotation.Include;
+import org.finroc.jc.annotation.IncludeClass;
 import org.finroc.jc.annotation.Managed;
 import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.Ref;
@@ -58,9 +56,7 @@ import org.finroc.core.thread.CoreLoopThreadBase;
  * is also framework element that groups blackboard servers
  */
 @Ptr @Friend(AbstractBlackboardServer.class)
-@ForwardDecl( {AbstractBlackboardServer.class, RawBlackboardClient.class})
-@CppInclude( {"AbstractBlackboardServer.h", "RawBlackboardClient.h"})
-@Include( {"core/RuntimeEnvironment.h"})
+@IncludeClass(RuntimeEnvironment.class)
 public class BlackboardManager extends FrameworkElement implements RuntimeListener {
 
     /**
