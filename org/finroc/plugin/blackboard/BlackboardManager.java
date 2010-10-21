@@ -41,6 +41,7 @@ import org.finroc.core.LockOrderLevels;
 import org.finroc.core.RuntimeEnvironment;
 import org.finroc.core.RuntimeListener;
 import org.finroc.core.plugin.Plugins;
+import org.finroc.core.port.AbstractPort;
 import org.finroc.core.port.PortCreationInfo;
 import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfacePort;
@@ -414,6 +415,11 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
                 }
             }
         }
+    }
+
+    @Override
+    public void runtimeEdgeChange(byte changeType, AbstractPort source, AbstractPort target) {
+        // do nothing
     }
 
     /**
