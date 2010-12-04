@@ -529,7 +529,9 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
             @Ptr ArrayWrapper<RawBlackboardClient> it = bbClients.getIterable();
             for (@SizeT int i = 0; i < it.size(); i++) {
                 RawBlackboardClient client = it.get(i);
-                client.sendKeepAlive();
+                if (client != null && client.isReady()) {
+                    client.sendKeepAlive();
+                }
             }
 
             // check for outdated locks (do this for local and shared blackboards)
