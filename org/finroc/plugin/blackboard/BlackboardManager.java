@@ -486,7 +486,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      */
     public void removeClient(RawBlackboardClient client) {
         synchronized (bbClients) {
-            bbClients.add(client, false);
+            bbClients.remove(client);
         }
         if (!client.autoConnectClient()) {
             return;
