@@ -95,7 +95,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
          * @param Default flags for AbstractBlackboardServers in this category
          */
         BlackboardCategory(String categoryName, int defaultFlags) {
-            super(categoryName, BlackboardManager.this, defaultFlags, -1);
+            super(BlackboardManager.this, categoryName, defaultFlags, -1);
             this.defaultFlags = defaultFlags;
         }
 
@@ -173,7 +173,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
     private SimpleListWithMutex<RawBlackboardClient> autoConnectClients = new SimpleListWithMutex<RawBlackboardClient>(LockOrderLevels.INNER_MOST - 50);
 
     private BlackboardManager() {
-        super(NAME, RuntimeEnvironment.getInstance());
+        super(RuntimeEnvironment.getInstance(), NAME);
         categories[LOCAL] = new BlackboardCategory("Local", CoreFlags.ALLOWS_CHILDREN);
         categories[SHARED] = new BlackboardCategory("Shared", CoreFlags.ALLOWS_CHILDREN | CoreFlags.SHARED | CoreFlags.GLOBALLY_UNIQUE_LINK);
         categories[REMOTE] = new BlackboardCategory("Remote", CoreFlags.ALLOWS_CHILDREN | CoreFlags.NETWORK_ELEMENT);

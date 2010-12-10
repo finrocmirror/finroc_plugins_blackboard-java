@@ -170,7 +170,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
      * @param autoConnectCategory If auto-connect is active: Limit auto-connecting to a specific blackboard category? (-1 is no)
      */
     public RawBlackboardClient(PortCreationInfo pci, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory) {
-        super(pci.description, pci.parent);
+        super(pci.parent, pci.description);
         AbstractBlackboardServer.checkType(pci.dataType);
         readPort = pci.getFlag(PortFlags.ACCEPTS_DATA) ? new ReadPort(new PortCreationInfo("read", this, pci.dataType, PortFlags.ACCEPTS_DATA | (pci.flags & PortFlags.PUSH_STRATEGY))) : null;
         writePort = pci.getFlag(PortFlags.EMITS_DATA) ? new WritePort(pci.dataType.getRelatedType()) : null ;
