@@ -124,22 +124,6 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
             }
         }
 
-//      /**
-//       * @param name Blackboard name
-//       * @return Blackboard with specified name - or null if no blackboard with this name exists
-//       */
-//      @InCppFile
-//      AbstractBlackboardServer getBlackboard(String name) {
-//          @Ptr ArrayWrapper<AbstractBlackboardServer> it = blackboards.getIterable();
-//          for (@SizeT int i = 0; i < it.size(); i++) {
-//              @Ptr AbstractBlackboardServer info = it.get(i);
-//              if (info != null && info.getDescription().equals(name)) {
-//                  return info;
-//              }
-//          }
-//          return null;
-//      }
-
         /**
          * Check whether blackboard client wants to connect to any contained blackboards
          *
@@ -303,81 +287,6 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
         }
         return result;
     }
-
-//  /**
-//   * Returns whether blackboard with specified name exists
-//   */
-//  public boolean blackboardExists(@Const @Ref String name) {
-//      return getRuntime().elementExists(createLinkName(name, true));
-//  }
-
-//  /**
-//   * Create link name for blackboard (as suggested by BlackboardManager)
-//   *
-//   * @param blackboardName name of blackboard
-//   * @param link name for blackboard read port?
-//   * @return link name (as suggested by BlackboardManager)
-//   */
-//  public static String createLinkName(@Const @Ref String blackboardName, boolean readPort) {
-//      return "/Blackboards/" + blackboardName + "/" + (readPort ? "read" : "write");
-//  }
-
-//  /**
-//   * Convert link name back to blackboard name
-//   *
-//   * @param linkName Link name
-//   * @return Blackboard name - or empty string if not a blackbaord link
-//   */
-//  public static String getBlackboardNameFromLink(@Const @Ref String linkName) {
-//      if (isWriteBlackboard(linkName) || isReadBlackboard(linkName)) {
-//          return linkName.substring(linkName.lastIndexOf("/") + 1, linkName.lastIndexOf("/"));
-//      }
-//      return "";
-//  }
-
-//  /**
-//   * Is this a link to a write blackboard?
-//   *
-//   * @param linkName Link name
-//   * @return Answer
-//   */
-//  public static boolean isWriteBlackboard(@Const @Ref String linkName) {
-//      return linkName.startsWith("/Blackboards/") && linkName.endsWith("/write");
-//  }
-//
-//  /**
-//   * Is this a link to a read blackboard?
-//   *
-//   * @param linkName Link name
-//   * @return Answer
-//   */
-//  public static boolean isReadBlackboard(@Const @Ref String linkName) {
-//      return linkName.startsWith("/Blackboards/") && linkName.endsWith("/read");
-//  }
-//
-//  /**
-//   * @param name Blackboard name
-//   * @return Blackboard info for remote blackboard with specified name - or null, if it does not exist
-//   */
-//  public AbstractBlackboardServer getRemoteBlackboard(@Const @Ref String name) {
-//      return categories[REMOTE].getBlackboard(name);
-//  }
-//
-//  /**
-//   * @param name Blackboard name
-//   * @return Blackboard info for local blackboard with specified name - or null, if it does not exist
-//   */
-//  public AbstractBlackboardServer getLocalBlackboard(@Const @Ref String name) {
-//      return categories[LOCAL].getBlackboard(name);
-//  }
-//
-//  /**
-//   * @param name Blackboard name
-//   * @return Blackboard info for shared blackboard with specified name - or null, if it does not exist
-//   */
-//  public AbstractBlackboardServer getSharedBlackboard(@Const @Ref String name) {
-//      return categories[SHARED].getBlackboard(name);
-//  }
 
     @Override
     public void runtimeChange(byte changeType, FrameworkElement element) {
