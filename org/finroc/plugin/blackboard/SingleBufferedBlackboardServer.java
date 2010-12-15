@@ -38,7 +38,6 @@ import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfaceServerPort;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.rpc.method.AbstractMethod;
-import org.finroc.core.port.std.Port;
 import org.finroc.core.port.std.PortBase;
 import org.finroc.core.port.std.PortData;
 import org.finroc.core.port.std.PullRequestHandler;
@@ -599,7 +598,7 @@ public class SingleBufferedBlackboardServer extends AbstractBlackboardServer imp
     }
 
     /** Special read port for blackboard buffer */
-    class BBReadPort extends Port<BlackboardBuffer> {
+    class BBReadPort extends PortBase {
 
         public BBReadPort(PortCreationInfo pci) {
             super(pci);

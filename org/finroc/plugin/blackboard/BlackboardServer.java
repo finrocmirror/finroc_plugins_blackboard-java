@@ -36,7 +36,7 @@ import org.finroc.core.port.PortCreationInfo;
 import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfaceServerPort;
 import org.finroc.core.port.rpc.MethodCallException;
-import org.finroc.core.port.std.Port;
+import org.finroc.core.port.std.PortBase;
 import org.finroc.core.portdatabase.DataType;
 
 /**
@@ -112,7 +112,7 @@ public class BlackboardServer extends AbstractBlackboardServer {
      */
     public BlackboardServer(String description, DataType type, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared) {
         super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
-        readPort = new Port<BlackboardBuffer>(new PortCreationInfo("read", this, type, PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
+        readPort = new PortBase(new PortCreationInfo("read", this, type, PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
         checkType(type);
         write = new InterfaceServerPort("write", this, type.getRelatedType(), this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
         writePort = write;

@@ -28,6 +28,7 @@ import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.Inline;
 import org.finroc.jc.annotation.JavaOnly;
+import org.finroc.jc.annotation.SharedPtr;
 import org.finroc.log.LogLevel;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.port.AbstractPort;
@@ -113,7 +114,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     //public static final byte LOCK = 1, ASYNCH_CHANGE = 2, UNLOCK = 3, READ_PART = 4, DIRECT_COMMIT = 5, DEPRECATED_DIRECT_BUFFER_ACCESS = 6, IS_SINGLE_BUFFERED = 7;
 
     /** Interface port for write access */
-    protected WritePort writePort;
+    protected @SharedPtr WritePort writePort;
 
     /** Port for reading */
     protected ReadPort readPort;
