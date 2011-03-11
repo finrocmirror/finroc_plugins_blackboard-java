@@ -21,18 +21,21 @@
  */
 package org.finroc.plugin.blackboard;
 
-import org.finroc.jc.AutoDeleter;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppType;
+import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.Inline;
+import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.Ref;
+import org.finroc.jc.annotation.SkipArgs;
 import org.finroc.jc.container.ReusablesPoolCR;
+import org.finroc.serialization.DataType;
+import org.finroc.serialization.DataTypeBase;
+import org.finroc.serialization.MemoryBuffer;
 import org.finroc.core.plugin.Plugin;
-import org.finroc.core.plugin.PluginManager;
-import org.finroc.core.portdatabase.DataType;
-import org.finroc.core.portdatabase.DataTypeRegister;
+import org.finroc.core.portdatabase.RPCInterfaceType;
 
 /**
  * @author max
@@ -46,21 +49,26 @@ public class BlackboardPlugin implements Plugin {
 //  public static int SINGLE_BUFFERED = PortFlags.FIRST_CUSTOM_PORT_FLAG;
 
     /** Reusable blackboard tasks */
+    @JavaOnly
     @Ptr static ReusablesPoolCR<BlackboardTask> taskPool;
 
+    public static DataTypeBase BB_MEM_BUFFER = registerBlackboardType(MemoryBuffer.class);
+    public static DataTypeBase BB_BLACKBOARD_BUFFER = registerBlackboardType(BlackboardBuffer.class);
+
     @Override
-    public void init(PluginManager mgr) {
-        taskPool = new ReusablesPoolCR<BlackboardTask>();
-        AutoDeleter.addStatic(taskPool);
+    public void init(/*PluginManager mgr*/) {
+//        taskPool = new ReusablesPoolCR<BlackboardTask>();
+//        AutoDeleter.addStatic(taskPool);
 
         //JavaOnlyBlock
-        mgr.addDataType(BlackboardBuffer.class);
+        @SuppressWarnings("unused")
+        DataTypeBase x = BlackboardBuffer.TYPE;
     }
 
     /*Cpp
     //wrapper for below
     template <typename T>
-    static core::DataType* registerBlackboardType(const finroc::util::String& name) {
+    static rrlib::serialization::DataTypeBase registerBlackboardType(const finroc::util::String& name) {
         return registerBlackboardType<T>(finroc::util::TypedClass<T>(), name);
     }
 
@@ -74,13 +82,52 @@ public class BlackboardPlugin implements Plugin {
      * @param name Blackboard buffer type name
      * @return Blackboard buffer type
      */
+    @Inline @SkipArgs("1")
+    public static <T> DataTypeBase registerBlackboardType(@PassByValue @CppType("finroc::util::TypedClass<T>") Class<T> clazz, @Const @Ref String name) {
+        @InCpp("rrlib::serialization::DataType<T> dt;")
+        DataTypeBase dt = DataTypeBase.findType(clazz);
+
+        //JavaOnlyBlock
+        if (dt == null) {
+            dt = new DataType<T>(clazz, name);
+        }
+
+        return BlackboardPlugin.<T>registerBlackboardType(dt, name);
+    }
+
+    /**
+     * Registers blackboard data type
+     * (actually two: one for buffer and one for method calls)
+     *
+     * @param dt Data type to create blackboard type for
+     * @return Blackboard buffer type
+     */
     @Inline
-    public static <T extends BlackboardBuffer> DataType registerBlackboardType(@PassByValue @CppType("finroc::util::TypedClass<T>") Class<T> clazz, @Const @Ref String name) {
-        DataType dt = DataTypeRegister.getInstance().getDataType(clazz, name);
-        DataType mc = DataTypeRegister.getInstance().addMethodDataType(name + " blackboard method calls", AbstractBlackboardServer.METHODS);
-        dt.setRelatedType(mc);
-        mc.setRelatedType(dt);
-        return dt;
+    public static <T> DataTypeBase registerBlackboardType(DataTypeBase dt) {
+        return BlackboardPlugin.<T>registerBlackboardType(dt, dt.getName());
+    }
+
+    /**
+     * Registers blackboard data type
+     * (actually two: one for buffer and one for method calls)
+     *
+     * @param dt Data type to create blackboard type for
+     * @param name Blackboard buffer type name
+     * @return Blackboard buffer type
+     */
+    @Inline
+    public static <T> DataTypeBase registerBlackboardType(DataTypeBase dt, @Const @Ref String name) {
+        String bb_name = "Blackboard<" + name + ">";
+        DataTypeBase dtbb = DataTypeBase.findType(bb_name);
+        if (dtbb == null) {
+            @InCpp("core::RPCInterfaceType rpct(bb_name, &AbstractBlackboardServer<T>::METHODS);")
+            RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.METHODS);
+            dtbb = rpct;
+            dt.setRelatedType(dtbb);
+            dtbb.setRelatedType(dt);
+        }
+
+        return dtbb;
     }
 
     /**
@@ -90,7 +137,8 @@ public class BlackboardPlugin implements Plugin {
      * @param clazz Type
      * @return Blackboard buffer type
      */
-    public static <T extends BlackboardBuffer> DataType registerBlackboardType(@PassByValue @CppType("finroc::util::TypedClass<T>") Class<T> clazz) {
-        return registerBlackboardType(clazz, DataTypeRegister.getCleanClassName(clazz));
+    @InCpp("return registerBlackboardType(clazz, rrlib::serialization::DataTypeBase::getDataTypeNameFromRtti(typeid(T).name()));")
+    public static <T> DataTypeBase registerBlackboardType(@PassByValue @CppType("finroc::util::TypedClass<T>") Class<T> clazz) {
+        return registerBlackboardType(clazz, clazz.getSimpleName());
     }
 }

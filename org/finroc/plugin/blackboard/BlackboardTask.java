@@ -21,35 +21,51 @@
  */
 package org.finroc.plugin.blackboard;
 
+import org.finroc.core.port.std.PortDataManager;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.Inline;
+import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.NoCpp;
+import org.finroc.jc.annotation.PassByValue;
+import org.finroc.jc.annotation.Superclass;
 import org.finroc.jc.container.Reusable;
+import org.finroc.serialization.PortDataList;
 
 /**
  * @author max
  *
  * Class to store pending blackboard tasks
  */
-@Inline @NoCpp
+@Inline @NoCpp @PassByValue @Superclass( {})
 public class BlackboardTask extends Reusable { /* implements Task */
 
     /** In case a thread is waiting on BlackboardServer - his uid - may only be changed in context synchronized to blackboard server */
     public long threadUid;
 
     /** BlackboardBuffer to use for task - if this is set, it will be unlocked with recycle */
-    @Const public BlackboardBuffer buffer;
+    @SuppressWarnings("rawtypes")
+    @JavaOnly @Const public PortDataList buffer;
 
     /** Offset for asynch change command */
-    public int offset;
+    @JavaOnly public long offset;
+
+    /** Start index for asynch change command */
+    @JavaOnly public int index;
 
     /** Recycle task */
+    @JavaOnly
     public void recycle2() {
         if (buffer != null) {
-            buffer.getManager().releaseLock();
+            PortDataManager.getManager(buffer).releaseLock();
             buffer = null;
         }
         //method = null;
         super.recycle();
     }
+
+    /*Cpp
+    bool operator==(const BlackboardTask& other) const {
+        return threadUid == other.threadUid;
+    }
+     */
 }

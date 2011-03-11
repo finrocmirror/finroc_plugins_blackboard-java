@@ -21,90 +21,79 @@
  */
 package org.finroc.plugin.blackboard;
 
-import org.finroc.jc.MutexLockOrderWithMonitor;
-import org.finroc.jc.Time;
 import org.finroc.jc.annotation.AtFront;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.CppType;
-import org.finroc.jc.annotation.Elems;
 import org.finroc.jc.annotation.InCpp;
+import org.finroc.jc.annotation.Include;
 import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.PassLock;
 import org.finroc.jc.annotation.Ptr;
+import org.finroc.jc.annotation.RawTypeArgs;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SizeT;
 import org.finroc.jc.annotation.Struct;
 import org.finroc.jc.annotation.Superclass;
-import org.finroc.jc.annotation.Virtual;
 import org.finroc.jc.container.SimpleList;
-import org.finroc.jc.log.LogDefinitions;
 import org.finroc.jc.thread.ThreadUtil;
-import org.finroc.log.LogDomain;
-import org.finroc.log.LogLevel;
+import org.finroc.serialization.PortDataList;
 import org.finroc.core.FrameworkElement;
-import org.finroc.core.LockOrderLevels;
-import org.finroc.core.port.rpc.InterfacePort;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.rpc.method.AbstractMethod;
-import org.finroc.core.port.rpc.method.AbstractMethodCallHandler;
-import org.finroc.core.port.rpc.method.Method0Handler;
 import org.finroc.core.port.rpc.method.Method1Handler;
 import org.finroc.core.port.rpc.method.Method2Handler;
-import org.finroc.core.port.rpc.method.Method3Handler;
 import org.finroc.core.port.rpc.method.Port0Method;
 import org.finroc.core.port.rpc.method.Port1Method;
 import org.finroc.core.port.rpc.method.Port2Method;
-import org.finroc.core.port.rpc.method.Port3Method;
 import org.finroc.core.port.rpc.method.PortInterface;
-import org.finroc.core.port.rpc.method.Void1Handler;
 import org.finroc.core.port.rpc.method.Void1Method;
-import org.finroc.core.port.rpc.method.Void2Handler;
-import org.finroc.core.port.rpc.method.Void2Method;
-import org.finroc.core.port.std.PortBase;
-import org.finroc.core.portdatabase.DataType;
+import org.finroc.core.port.rpc.method.Void3Handler;
+import org.finroc.core.port.rpc.method.Void3Method;
 
 /** Blackboard info */
 @SuppressWarnings("rawtypes")
-@Struct @AtFront @Ptr @Superclass( {FrameworkElement.class, AbstractMethodCallHandler.class})
-abstract class AbstractBlackboardServer extends FrameworkElement implements
-        Method1Handler<BlackboardBuffer, Long>,
-        Method2Handler<BlackboardBuffer, Long, Integer>,
-        Void2Handler<Integer, BlackboardBuffer>,
-        Method3Handler<BlackboardBuffer, Integer, Integer, Integer>,
-            Void1Handler, Method0Handler<Byte> {
+@Struct @AtFront @Ptr @Superclass( {AbstractBlackboardServerRaw.class})
+@Include("core/port/tPortTypeMap.h") @RawTypeArgs
+abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw implements
+        Method1Handler<PortDataList, Integer>,
+        Method2Handler<PortDataList, Integer, Integer>,
+            Void3Handler<PortDataList, Integer, Integer> {
 
-    /** Lock for blackboard operation (needs to be deeper than runtime - (for initial pushes etc.)) */
-    public MutexLockOrderWithMonitor bbLock = new MutexLockOrderWithMonitor(LockOrderLevels.INNER_MOST - 1000);
+    /*Cpp
 
-    /** read port */
-    public PortBase readPort;
+    typedef typename core::PortTypeMap<T>::ListType BBVector;
+    typedef typename std::shared_ptr<BBVector> BBVectorVar;
+    typedef typename std::shared_ptr<const BBVector> ConstBBVectorVar;
+    typedef typename core::PortTypeMap<BBVector>::GenericChange ChangeTransaction;
+    typedef typename std::shared_ptr<ChangeTransaction> ChangeTransactionVar;
+    typedef typename std::shared_ptr<const ChangeTransaction> ConstChangeTransactionVar;
 
-    /** write port */
-    public InterfacePort writePort;
+    using AbstractBlackboardServerRaw::_M_handleCall;
 
-    /** Category index of Blackboard category that this server belongs to (see constants in BlackboardManager) */
-    public final int categoryIndex;
+    class AsynchChangeTask : public BlackboardTask {
 
-    /** Blackboard category that this server belongs to */
-    public final @Ptr BlackboardManager.BlackboardCategory myCategory;
+    public:
 
-    /**
-     * Queue with pending major commands (e.g. LOCK, READ_PART in SingleBufferedBlackboard)
-     * They are executed in another thread
-     * may only be accessed in synchronized context */
-    protected final @PassByValue SimpleList<BlackboardTask> pendingMajorTasks = new SimpleList<BlackboardTask>();
+        // BlackboardBuffer to use for task - if this is set, it will be unlocked with recycle
+        ConstChangeTransactionVar buffer;
+
+        // Offset for asynch change command
+        int64_t offset;
+
+        // index for asynch change command
+        int64_t index;
+    };
+     */
 
     /**
      * Queue with pending asynch change commands
      * they don't lock and don't execute in an extra thread
      * may only be accessed in synchronized context
      */
-    protected final @PassByValue SimpleList<BlackboardTask> pendingAsynchChangeTasks = new SimpleList<BlackboardTask>();
-
-    /** Uid of thread that is allowed to wake up now - after notifyAll() - thread should reset this to -1 as soon as possible */
-    protected long wakeupThread = -1;
+    @CppType("util::SimpleList<AsynchChangeTask>")
+    public final @PassByValue SimpleList<BlackboardTask> pendingAsynchChangeTasks = new SimpleList<BlackboardTask>();
 
     // Methods...
 
@@ -112,163 +101,72 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     @PassByValue public static PortInterface METHODS = new PortInterface("Blackboard Interface");
 
     /** Write Lock */
-    @PassByValue public static Port1Method<AbstractBlackboardServer, BlackboardBuffer, Long> LOCK =
-        new Port1Method<AbstractBlackboardServer, BlackboardBuffer, Long>(METHODS, "Lock", "timeout", true);
+    @CppType("core::Port1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar, int>")
+    @PassByValue public static Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > LOCK =
+        new Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > (METHODS, "Lock", "timeout", true);
 
     /** Read Lock (only useful for SingleBufferedBlackboardBuffers) */
-    @Elems( {Void.class, Const.class, Void.class, Void.class})
-    @PassByValue public static Port2Method<AbstractBlackboardServer, BlackboardBuffer, Long, Integer> READ_LOCK =
-        new Port2Method<AbstractBlackboardServer, BlackboardBuffer, Long, Integer>(METHODS, "Lock", "timeout", "dummy", true);
+    @CppType("core::Port2Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::ConstBBVectorVar, int, int>")
+    @PassByValue public static Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > READ_LOCK =
+        new Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (METHODS, "Lock", "timeout", "dummy", true);
 
     /** Write Unlock */
-    @CppType("core::Void1Method<AbstractBlackboardServer*, BlackboardBuffer*>")
+    @CppType("core::Void1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar>")
     @PassByValue public static Void1Method UNLOCK =
         new Void1Method(METHODS, "Unlock", "Blackboard Buffer", false);
 
     /** Read Unlock */
-    @CppType("core::Void1Method<AbstractBlackboardServer*, int>")
+    @CppType("core::Void1Method<AbstractBlackboardServer<T>*, int>")
     @PassByValue public static Void1Method READ_UNLOCK =
         new Void1Method(METHODS, "Unlock", "Lock ID", false);
 
     /** Asynch Change */
-    @Elems( {Void.class, Void.class, Const.class})
-    @PassByValue public static Void2Method<AbstractBlackboardServer, Integer, BlackboardBuffer> ASYNCH_CHANGE =
-        new Void2Method<AbstractBlackboardServer, Integer, BlackboardBuffer>(METHODS, "Asynchronous Change", "Offset", "Blackboard Buffer (null if only read locked", false);
+    @CppType("core::Void3Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::ConstChangeTransactionVar, int, int>")
+    @PassByValue public static Void3Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > ASYNCH_CHANGE =
+        new Void3Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (METHODS, "Asynchronous Change", "Blackboard Buffer", "Start Index", "Custom Offset", false);
 
-    /** Read part of blackboard (no extra thread with multi-buffered blackboards) */
-    @PassByValue public static Port3Method<AbstractBlackboardServer, BlackboardBuffer, Integer, Integer, Integer> READ_PART =
-        new Port3Method<AbstractBlackboardServer, BlackboardBuffer, Integer, Integer, Integer>(METHODS, "Read Part", "Offset", "Length", "Timeout", true);
+//    /** Read part of blackboard (no extra thread with multi-buffered blackboards) */
+//    @PassByValue public static Port3Method<AbstractBlackboardServer, BlackboardBuffer, Integer, Integer, Integer> READ_PART =
+//        new Port3Method<AbstractBlackboardServer, BlackboardBuffer, Integer, Integer, Integer>(METHODS, "Read Part", "Offset", "Length", "Timeout", true);
 
     /** Directly commit buffer */
-    @CppType("core::Void1Method<AbstractBlackboardServer*, BlackboardBuffer*>")
+    @CppType("core::Void1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar>")
     @PassByValue public static Void1Method DIRECT_COMMIT =
         new Void1Method(METHODS, "Direct Commit", "Buffer", false);
 
     /** Is server a single-buffered blackboard server? */
+    @CppType("core::Port0Method<AbstractBlackboardServer<T>*, int8>")
     @PassByValue public static Port0Method<AbstractBlackboardServer, Byte> IS_SINGLE_BUFFERED =
         new Port0Method<AbstractBlackboardServer, Byte>(METHODS, "Is Single Buffered?", false);
 
-    /** Is server a single-buffered blackboard server? */
-    @CppType("core::Void1Method<AbstractBlackboardServer*, int>")
+    /** Send keep-alive signal for lock */
+    @CppType("core::Void1Method<AbstractBlackboardServer<T>*, int>")
     @PassByValue public static Void1Method KEEP_ALIVE =
         new Void1Method(METHODS, "KeepAliveSignal", "Lock ID", false);
-
-    /** Log domain for this class */
-    @InCpp("_RRLIB_LOG_CREATE_NAMED_DOMAIN(logDomain, \"blackboard\");")
-    public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
 
     /**
      * @param bbName Blackboard name
      * @param category Blackboard category (see constants in BlackboardManager)
      */
     public AbstractBlackboardServer(String bbName, int category, @CppDefault("NULL") FrameworkElement parent) {
-        this(bbName, category, BlackboardManager.getInstance().getCategory(category).defaultFlags, parent);
-    }
-
-    /**
-     * @param bbName Blackboard name
-     * @param category Blackboard category (see constants in BlackboardManager)
-     * @param flags Flags for blackboard
-     */
-    @JavaOnly
-    private AbstractBlackboardServer(@Const @Ref String bbName, int category, int flags, @CppDefault("NULL") FrameworkElement parent) {
-        super(parent == null ? BlackboardManager.getInstance().getCategory(category) : parent, bbName, flags, -1);
-        myCategory = BlackboardManager.getInstance().getCategory(category);
-        categoryIndex = category;
-    }
-
-    protected void postChildInit() {
-        myCategory.add(this);
-    }
-
-    protected synchronized void prepareDelete() {
-        synchronized (bbLock) {
-            if (BlackboardManager.getInstance() != null) { // we don't need to remove it, if blackboard manager has already been deleted
-                myCategory.remove(this);
-            }
-
-            clearAsyncChangeTasks();
-        }
-    }
-
-    /**
-     * Check whether this is a valid data type for blackboards
-     *
-     * @param dt Data type to check
-     */
-    public static void checkType(DataType dt) {
-        assert(dt.getRelatedType() != null && dt.getRelatedType().isMethodType()) : "Please register Blackboard types using Blackboard2Plugin class";
+        super(bbName, category, parent);
     }
 
     /**
      * Copy a blackboard buffer
+     * TODO: provide factory for buffer reuse
      *
      * @param src Source Buffer
      * @param target Target Buffer
      */
-    public void copyBlackboardBuffer(BlackboardBuffer src, BlackboardBuffer target) {
-        target.resize(src.getBbCapacity(), src.getElements(), src.getElementSize(), false);
-        target.getBuffer().put(0, src.getBuffer(), 0, src.getSize());
-    }
-
-    /**
-     * @return Unused blackboard task for pending tasks
-     */
-    protected BlackboardTask getUnusedBlackboardTask() {
-        BlackboardTask task = BlackboardPlugin.taskPool.getUnused();
-        if (task == null) {
-            task = new BlackboardTask();
-            BlackboardPlugin.taskPool.attach(task, false);
-        }
-        return task;
+    @InCpp("rrlib::serialization::deepcopy::copy(src, target, NULL);")
+    public void copyBlackboardBuffer(@Const @CppType("BBVector") @Ref PortDataList<T> src, @Ref @CppType("BBVector") PortDataList<T> target) {
+        target.copyFrom(src);
+        //target.resize(src.getBbCapacity(), src.getElements(), src.getElementSize(), false);
+        //target.getBuffer().put(0, src.getBuffer(), 0, src.getSize());
     }
 
     ////Cpp finroc::util::Lock* curlock;
-
-    /**
-     * Wait to receive lock on blackboard for specified amount of time
-     * (MUST be called in synchronized context)
-     *
-     * @param timeout Time to wait for lock
-     * @return Do we have a lock now? (or did rather timeout expire?)
-     */
-    @PassLock("bbLock")
-    protected boolean waitForLock(/*@Const AbstractMethod method,*/ long timeout) {
-        BlackboardTask task = getUnusedBlackboardTask();
-        //task.method = method;
-        task.threadUid = ThreadUtil.getCurrentThreadId();
-        pendingMajorTasks.add(task);
-        long startTime = Time.getCoarse();
-        //long curTime = startTime;
-        long waitFor = timeout;
-        //System.out.println(createThreadString() + ": waiting " + timeout + " ms for lock");
-        while (waitFor > 0) {
-            try {
-                //System.out.println(createThreadString() + ": entered wait");
-                bbLock.wait(waitFor);
-            } catch (InterruptedException e) {
-                //e.printStackTrace();
-                log(LogLevel.LL_WARNING, logDomain, "Wait interrupted in AbstractBlackboardServer - shouldn't happen... usually");
-            }
-            waitFor = timeout - (Time.getCoarse() - startTime);
-            //System.out.println(createThreadString() + ": left wait; waitFor = " + waitFor + "; wakeupThread = " + wakeupThread);
-            if (wakeupThread == ThreadUtil.getCurrentThreadId()) {
-                // ok, it's our turn now
-                pendingMajorTasks.removeElem(task);
-                wakeupThread = -1;
-                task.recycle2();
-                assert(!isLocked());
-                return true;
-            }
-        }
-
-        // ok, time seems to have run out - we have synchronized context though - so removing task is safe
-        //System.out.println(createThreadString() + ": time has run out; isLocked() = " + isLocked());
-        pendingMajorTasks.removeElem(task);
-        task.recycle2();
-        assert(isLocked()) : "Somebody forgot thread waiting on blackboard";
-        return false;
-    }
 
     /**
      * @return Thread string (debug helper method)
@@ -308,9 +206,12 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      * Clear any asynch change tasks from list
      */
     protected void clearAsyncChangeTasks() {
+
+        //JavaOnlyBlock
         for (@SizeT int i = 0; i < pendingAsynchChangeTasks.size(); i++) {
             pendingAsynchChangeTasks.get(i).recycle2();
         }
+
         pendingAsynchChangeTasks.clear();
     }
 
@@ -320,10 +221,15 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      */
     protected void processPendingAsynchChangeTasks() {
         for (@SizeT int i = 0; i < pendingAsynchChangeTasks.size(); i++) {
+            @CppType("AsynchChangeTask")
             BlackboardTask task = pendingAsynchChangeTasks.get(i);
-            asynchChange(task.offset, task.buffer, false);
+            asynchChange(task.buffer, (int)task.index, (int)task.offset, false);
+
+            //JavaOnlyBlock
             task.buffer = null; // already unlocked by method
             task.recycle2();
+
+            //Cpp task.buffer._reset();
         }
         pendingAsynchChangeTasks.clear();
     }
@@ -335,10 +241,12 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      * @param offset Offset offset to start writing
      * @param buf (Locked) buffer with contents to write
      */
-    protected void deferAsynchChangeCommand(int offset, @Const BlackboardBuffer buf) {
+    protected void deferAsynchChangeCommand(@CppType("ConstChangeTransactionVar") PortDataList buf, int index, int offset) {
+        @InCpp("AsynchChangeTask task;")
         BlackboardTask task = getUnusedBlackboardTask();
         task.offset = offset;
         task.buffer = buf;
+        task.index = index;
         pendingAsynchChangeTasks.add(task);
     }
 
@@ -366,18 +274,19 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     /**
      * Asynchronous change to blackboard
      *
-     * @param offset Offset in blackboard
      * @param buf Buffer with contents to write there
+     * @param startIdx Start index in blackboard
+     * @param offset Custom optional Offset in element type
      * @param checkLock Check whether buffer is currently locked, before performing asynch change (normal operation)
      */
-    protected abstract void asynchChange(int i, @Const BlackboardBuffer buf, boolean checkLock);
+    protected abstract void asynchChange(@CppType("ConstChangeTransactionVar") PortDataList buf, int startIdx, int offset, boolean checkLock);
 
     /**
      * Unlock blackboard (from write lock)
      *
      * @param buf Buffer containing changes (may be the same or another one - the latter is typically the case with remote clients)
      */
-    protected abstract void writeUnlock(BlackboardBuffer buf);
+    protected abstract void writeUnlock(@CppType("BBVectorVar") PortDataList buf);
 
     /**
      * Unlock blackboard (from read lock)
@@ -391,7 +300,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      *
      * @param buf New Buffer
      */
-    protected abstract void directCommit(BlackboardBuffer buf);
+    protected abstract void directCommit(@CppType("BBVectorVar") PortDataList buf);
 
     /**
      * @return Is this a single buffered blackboard server?
@@ -404,7 +313,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      * @param timeout Timeout in ms
      * @return Locked BlackboardBuffer (if lockId is < 0 this is a copy)
      */
-    protected abstract @Const BlackboardBuffer readLock(long timeout) throws MethodCallException;
+    protected abstract @CppType("AbstractBlackboardServer<T>::ConstBBVectorVar") PortDataList readLock(long timeout) throws MethodCallException;
 
     /**
      * Perform read lock (only do this on single-buffered blackboards)
@@ -412,17 +321,17 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
      * @param timeout Timeout in ms
      * @return Locked BlackboardBuffer (if lockId is < 0 this is a copy)
      */
-    protected abstract BlackboardBuffer writeLock(long timeout);
+    protected abstract @CppType("AbstractBlackboardServer<T>::BBVectorVar") PortDataList writeLock(long timeout);
 
-    /**
-     * Read part of blackboard
-     *
-     * @param offset Offset to start reading
-     * @param length Length (in bytes) of area to read
-     * @param timeout Timeout for this command
-     * @return Memory buffer containing read area
-     */
-    protected abstract BlackboardBuffer readPart(int offset, int length, int timeout) throws MethodCallException ;
+//    /**
+//     * Read part of blackboard
+//     *
+//     * @param offset Offset to start reading
+//     * @param length Length (in bytes) of area to read
+//     * @param timeout Timeout for this command
+//     * @return Memory buffer containing read area
+//     */
+//    protected abstract BlackboardBuffer readPart(int offset, int length, int timeout) throws MethodCallException ;
 
     // Call handling
 
@@ -432,11 +341,11 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
         if (method == KEEP_ALIVE) {
             keepAlive((Integer)p1);
         } else if (method == DIRECT_COMMIT) {
-            directCommit((BlackboardBuffer)p1);
+            directCommit((PortDataList)p1);
         } else if (method == READ_UNLOCK) {
             readUnlock((Integer)p1);
         } else if (method == UNLOCK) {
-            writeUnlock((BlackboardBuffer)p1);
+            writeUnlock((PortDataList)p1);
         } else {
             LOCK.cleanup(p1);
             throw new MethodCallException(MethodCallException.Type.UNKNOWN_METHOD);
@@ -444,7 +353,7 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     }
 
     /*Cpp
-    void handleVoidCall(core::AbstractMethod* method, BlackboardBuffer* p1) {
+    void handleVoidCall(core::AbstractMethod* method, BBVectorVar p1) {
         if (method == &DIRECT_COMMIT) {
             directCommit(p1);
         } else if (method == &UNLOCK) {
@@ -467,45 +376,51 @@ abstract class AbstractBlackboardServer extends FrameworkElement implements
     }
      */
 
-    @Override
-    public BlackboardBuffer handleCall(AbstractMethod method, Integer p1, Integer p2, Integer p3) throws MethodCallException {
-        assert(method == READ_PART);
-        return readPart(p1, p2, p3);
-    }
+//    @Override
+//    public BlackboardBuffer handleCall(AbstractMethod method, Integer p1, Integer p2, Integer p3) throws MethodCallException {
+//        assert(method == READ_PART);
+//        return readPart(p1, p2, p3);
+//    }
 
     @Override
-    public BlackboardBuffer handleCall(AbstractMethod method, Long p1) throws MethodCallException {
+    public @CppType("BBVectorVar") PortDataList handleCall(AbstractMethod method, Integer p1) throws MethodCallException {
         assert(method == LOCK);
         return writeLock(p1);
     }
 
     @Override @Const
-    public BlackboardBuffer handleCall(AbstractMethod method, Long p1, Integer dummy) throws MethodCallException {
+    public @CppType("BBVectorVar") PortDataList handleCall(AbstractMethod method, Integer p1, Integer dummy) throws MethodCallException {
         assert(method == READ_LOCK);
         return readLock(p1);
     }
 
     @Override
-    public Byte handleCall(AbstractMethod method) throws MethodCallException {
-        return isSingleBuffered() ? (byte)1 : (byte)0;
-    }
-
-    @Override
-    public void handleVoidCall(AbstractMethod method, Integer p1, @Const BlackboardBuffer p2) throws MethodCallException {
+    public void handleVoidCall(AbstractMethod method, @CppType("ConstChangeTransactionVar") PortDataList p2, Integer index, Integer offset) throws MethodCallException {
         assert(method == ASYNCH_CHANGE);
-        asynchChange(p1, p2, true);
+        asynchChange(p2, index, offset, true);
     }
 
     /**
-     * (Only works in C++)
-     * Retrieve size information for blackboard
+     * Resize blackboard
+     *
+     * @param buf Buffer to resize
+     * @param newCapacity new Capacity
+     * @param newElements new current number of elements
      */
-    @Virtual
-    public void getSizeInfo(@SizeT @Ref int elementSize, @SizeT @Ref int elements, @SizeT @Ref int capacity) {
-        @Const BlackboardBuffer buf = (BlackboardBuffer)readPort.getLockedUnsafeRaw();
-        elementSize = buf.getElementSize();
-        elements = buf.getElements();
-        capacity = buf.getBbCapacity();
-        buf.getManager().releaseLock();
+    @InCpp("buf._resize(newElements);")
+    protected void resize(@Ref @CppType("BBVector") PortDataList<T> buf, int newCapacity, int newElements/*, int newElementSize, boolean keepContents*/) {
+        buf.resize(newElements);
+    }
+
+    /**
+     * Apply asynch change to blackboard
+     *
+     * @param bb blackboard buffer
+     * @param changes Changes to apply
+     */
+    @SuppressWarnings("unchecked")
+    @InCpp("core::typeutil::applyChange(bb, *changes, index, offset);")
+    protected void applyAsynchChange(@Ref @CppType("BBVector") PortDataList bb, @CppType("ConstChangeTransactionVar") PortDataList changes, int index, int offset) {
+        bb.applyChange(changes, index, offset);
     }
 }

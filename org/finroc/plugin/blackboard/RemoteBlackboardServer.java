@@ -21,8 +21,11 @@
  */
 package org.finroc.plugin.blackboard;
 
+import org.finroc.jc.annotation.CppType;
 import org.finroc.jc.annotation.Inline;
 import org.finroc.jc.annotation.NoCpp;
+import org.finroc.serialization.PortDataList;
+import org.finroc.core.datatype.CoreNumber;
 import org.finroc.core.port.rpc.MethodCallException;
 
 /**
@@ -31,14 +34,15 @@ import org.finroc.core.port.rpc.MethodCallException;
  * Dummy object to handle/categorise remote blackboards
  */
 @Inline @NoCpp
-public class RemoteBlackboardServer extends AbstractBlackboardServer {
+@SuppressWarnings("rawtypes")
+public class RemoteBlackboardServer extends AbstractBlackboardServer<CoreNumber> {
 
     public RemoteBlackboardServer(String name) {
         super(name, BlackboardManager.REMOTE, null);
     }
 
     @Override
-    protected void asynchChange(int i, BlackboardBuffer buf, boolean checkLock) {
+    protected void asynchChange(@CppType("ConstChangeTransactionVar") PortDataList buf, int index, int offset, boolean checkLock) {
         throw new RuntimeException("Operation not supported");
     }
 
@@ -58,7 +62,7 @@ public class RemoteBlackboardServer extends AbstractBlackboardServer {
     }
 
     @Override
-    protected void directCommit(BlackboardBuffer buf) {
+    protected void directCommit(@CppType("BBVectorVar") PortDataList buf) {
         throw new RuntimeException("Operation not supported");
     }
 
@@ -68,14 +72,14 @@ public class RemoteBlackboardServer extends AbstractBlackboardServer {
     }
 
     @Override
-    protected BlackboardBuffer readLock(long timeout) throws MethodCallException {
+    protected @CppType("ConstBBVectorVar") PortDataList readLock(long timeout) throws MethodCallException {
         throw new RuntimeException("Operation not supported");
     }
 
-    @Override
-    protected BlackboardBuffer readPart(int offset, int length, int timeout) {
-        throw new RuntimeException("Operation not supported");
-    }
+//    @Override
+//    protected BlackboardBuffer readPart(int offset, int length, int timeout) {
+//        throw new RuntimeException("Operation not supported");
+//    }
 
     @Override
     protected void readUnlock(int lockId) throws MethodCallException {
@@ -83,12 +87,12 @@ public class RemoteBlackboardServer extends AbstractBlackboardServer {
     }
 
     @Override
-    protected BlackboardBuffer writeLock(long timeout) {
+    protected @CppType("BBVectorVar")PortDataList writeLock(long timeout) {
         throw new RuntimeException("Operation not supported");
     }
 
     @Override
-    protected void writeUnlock(BlackboardBuffer buf) {
+    protected void writeUnlock(@CppType("BBVectorVar") PortDataList buf) {
         throw new RuntimeException("Operation not supported");
     }
 }

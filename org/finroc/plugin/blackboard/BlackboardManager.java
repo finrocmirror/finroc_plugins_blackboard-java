@@ -35,6 +35,7 @@ import org.finroc.jc.annotation.SizeT;
 import org.finroc.jc.container.SafeConcurrentlyIterableList;
 import org.finroc.jc.container.SimpleListWithMutex;
 import org.finroc.jc.thread.ThreadUtil;
+import org.finroc.serialization.DataTypeBase;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;
@@ -46,7 +47,6 @@ import org.finroc.core.port.PortCreationInfo;
 import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfacePort;
 import org.finroc.core.port.std.PortBase;
-import org.finroc.core.portdatabase.DataType;
 import org.finroc.core.thread.CoreLoopThreadBase;
 
 /**
@@ -56,7 +56,7 @@ import org.finroc.core.thread.CoreLoopThreadBase;
  *
  * is also framework element that groups blackboard servers
  */
-@Ptr @Friend(AbstractBlackboardServer.class)
+@Ptr @Friend(AbstractBlackboardServerRaw.class)
 @IncludeClass(RuntimeEnvironment.class)
 public class BlackboardManager extends FrameworkElement implements RuntimeListener {
 
@@ -88,7 +88,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
         @Const public final int defaultFlags;
 
         /** List of blackboards in category */
-        final SafeConcurrentlyIterableList<AbstractBlackboardServer> blackboards = new SafeConcurrentlyIterableList<AbstractBlackboardServer>(100, 4);
+        final SafeConcurrentlyIterableList<AbstractBlackboardServerRaw> blackboards = new SafeConcurrentlyIterableList<AbstractBlackboardServerRaw>(100, 4);
 
         /**
          * @param categoryName Name of category
@@ -105,7 +105,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
          * @param blackboard Blackboard to add
          */
         @InCppFile
-        void add(AbstractBlackboardServer blackboard) {
+        void add(AbstractBlackboardServerRaw blackboard) {
             synchronized (autoConnectClients) {
                 blackboards.add(blackboard, false);
                 checkAutoConnect(blackboard);
@@ -118,7 +118,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
          * @param blackboard Blackboard to remove
          */
         @InCppFile
-        void remove(AbstractBlackboardServer blackboard) {
+        void remove(AbstractBlackboardServerRaw blackboard) {
             synchronized (autoConnectClients) {
                 blackboards.remove(blackboard);
             }
@@ -131,9 +131,9 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
          */
         @InCppFile
         void checkConnect(RawBlackboardClient client) {
-            @Ptr ArrayWrapper<AbstractBlackboardServer> it = blackboards.getIterable();
+            @Ptr ArrayWrapper<AbstractBlackboardServerRaw> it = blackboards.getIterable();
             for (@SizeT int i = 0; i < it.size(); i++) {
-                @Ptr AbstractBlackboardServer info = it.get(i);
+                @Ptr AbstractBlackboardServerRaw info = it.get(i);
                 if (client.checkConnect(info)) {
                     return;
                 }
@@ -200,7 +200,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      * @param type Data type of blackboard (null all types)
      * @return Blackboard - or null if no blackboard could be found
      */
-    public AbstractBlackboardServer getBlackboard(@Const @Ref String name, int category, DataType type) {
+    public AbstractBlackboardServerRaw getBlackboard(@Const @Ref String name, int category, DataTypeBase type) {
         int startCat = category < 0 ? 0 : category;
         int endCat = category < 0 ? DIMENSION - 1 : startCat;
         return getBlackboard(name, startCat, endCat, type);
@@ -215,13 +215,13 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      * @param type Data type of blackboard (null all types)
      * @return Blackboard - or null if no blackboard could be found
      */
-    public AbstractBlackboardServer getBlackboard(@Const @Ref String name, int startCat, int endCat, DataType type) {
+    public AbstractBlackboardServerRaw getBlackboard(@Const @Ref String name, int startCat, int endCat, DataTypeBase type) {
         for (int c = startCat; c <= endCat; c++) {
             BlackboardCategory cat = categories[c];
-            @Ptr ArrayWrapper<AbstractBlackboardServer> it = cat.blackboards.getIterable();
+            @Ptr ArrayWrapper<AbstractBlackboardServerRaw> it = cat.blackboards.getIterable();
             for (@SizeT int i = 0; i < it.size(); i++) {
-                @Ptr AbstractBlackboardServer info = it.get(i);
-                if (info.getDescription().equals(name) && (type == null || info.readPort.getDataType() == type)) {
+                @Ptr AbstractBlackboardServerRaw info = it.get(i);
+                if (info.getDescription().equals(name) && (type == null || info.readPortRaw.getDataType() == type)) {
                     return info;
                 }
             }
@@ -236,7 +236,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      * @param category Index in which category? (-1 all)
      * @return Blackboard - or null, if it does not exist (can happen, because lists are not filled continuously when blackboards are deleted)
      */
-    public AbstractBlackboardServer getBlackboard(@SizeT int index, @CppDefault("-1") int category) {
+    public AbstractBlackboardServerRaw getBlackboard(@SizeT int index, @CppDefault("-1") int category) {
         int startCat = category < 0 ? 0 : category;
         int endCat = category < 0 ? DIMENSION - 1 : startCat;
         return getBlackboard(index, startCat, endCat);
@@ -250,10 +250,10 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      * @param endCat end category index (inclusive)
      * @return Blackboard - or null, if it does not exist (can happen, because lists are not filled continuously when blackboards are deleted)
      */
-    public AbstractBlackboardServer getBlackboard(@SizeT int index, int startCat, int endCat) {
+    public AbstractBlackboardServerRaw getBlackboard(@SizeT int index, int startCat, int endCat) {
         for (int c = startCat; c <= endCat; c++) {
             BlackboardCategory cat = categories[c];
-            @Ptr ArrayWrapper<AbstractBlackboardServer> it = cat.blackboards.getIterable();
+            @Ptr ArrayWrapper<AbstractBlackboardServerRaw> it = cat.blackboards.getIterable();
             if (index >= it.size()) {
                 index -= it.size();
                 continue;
@@ -302,23 +302,23 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
                 boolean write = qname.endsWith(WRITE_POSTFIX);
 
                 if (name.length() > 0) {
-                    AbstractBlackboardServer info = getBlackboard(name, REMOTE, null);
+                    AbstractBlackboardServerRaw info = getBlackboard(name, REMOTE, null);
 
                     // okay create blackboard proxy
                     boolean add = (info == null);
                     if (add) {
                         info = new RemoteBlackboardServer(name);
                     }
-                    if (read && info.readPort == null) {
+                    if (read && info.readPortRaw == null) {
                         PortBase port = (PortBase)element;
-                        info.readPort = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), PortFlags.OUTPUT_PROXY));
+                        info.readPortRaw = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), PortFlags.OUTPUT_PROXY));
                         info.init();
-                        info.readPort.connectToSource(qname);
-                    } else if (write && info.writePort == null) {
+                        info.readPortRaw.connectToSource(qname);
+                    } else if (write && info.writePortRaw == null) {
                         InterfacePort port = (InterfacePort)element;
-                        info.writePort = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing);
+                        info.writePortRaw = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing);
                         info.init();
-                        info.writePort.connectToSource(qname);
+                        info.writePortRaw.connectToSource(qname);
                     }
                     checkAutoConnect(info);
                 }
@@ -336,8 +336,8 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      *
      * @param server new server to check with
      */
-    private void checkAutoConnect(AbstractBlackboardServer server) {
-        if (server.readPort == null || server.writePort == null) {
+    private void checkAutoConnect(AbstractBlackboardServerRaw server) {
+        if (server.readPortRaw == null || server.writePortRaw == null) {
             return;
         }
         synchronized (autoConnectClients) {
@@ -446,9 +446,9 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
             // check for outdated locks (do this for local and shared blackboards)
             for (int i = 0; i < 2; i++) {
                 BlackboardCategory cat = getCategory(i == 0 ? LOCAL : SHARED);
-                @Ptr ArrayWrapper<AbstractBlackboardServer> it2 = cat.blackboards.getIterable();
+                @Ptr ArrayWrapper<AbstractBlackboardServerRaw> it2 = cat.blackboards.getIterable();
                 for (@SizeT int j = 0; j < it2.size(); j++) {
-                    @Ptr AbstractBlackboardServer bb = it2.get(j);
+                    @Ptr AbstractBlackboardServerRaw bb = it2.get(j);
                     if (bb != null && bb.isReady()) {
                         bb.lockCheck();
                     }

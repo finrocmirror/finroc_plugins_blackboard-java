@@ -22,30 +22,29 @@
 package org.finroc.plugin.blackboard;
 
 import org.finroc.jc.annotation.ConstMethod;
-import org.finroc.core.buffer.CoreOutput;
-import org.finroc.core.buffer.CoreInput;
-import org.finroc.core.buffer.MemBuffer;
-import org.finroc.core.portdatabase.DataType;
+import org.finroc.serialization.InputStreamBuffer;
+import org.finroc.serialization.MemoryBuffer;
+import org.finroc.serialization.OutputStreamBuffer;
 
 /**
  * @author max
  *
- * Buffer containing blackboard data
+ * Buffer containing blackboard data - in MCA style
  */
-public class BlackboardBuffer extends MemBuffer {
+public class BlackboardBuffer extends MemoryBuffer {
 
-    /** Datatypes for blackboard buffer and method calls */
-    public static DataType BUFFER_TYPE = BlackboardPlugin.registerBlackboardType(BlackboardBuffer.class, "Raw Blackboard Data");
+//    /** Data type of this class */
+//    @Const public final static DataTypeBase TYPE = DataTypeRegister.;
 
-    /** Lock ID of buffer - against outdated unlocks */
-    int lockID;
+//    /** Lock ID of buffer - against outdated unlocks */
+//    int lockID;
 
     /** Number of entries and entry size */
     int bbCapacity, elements, elementSize;
 
     @Override
-    public void deserialize(CoreInput is) {
-        lockID = is.readInt();
+    public void deserialize(InputStreamBuffer is) {
+        //lockID = is.readInt();
         bbCapacity = is.readInt();
         elements = is.readInt();
         elementSize = is.readInt();
@@ -53,8 +52,8 @@ public class BlackboardBuffer extends MemBuffer {
     }
 
     @Override
-    public void serialize(CoreOutput os) {
-        os.writeInt(lockID);
+    public void serialize(OutputStreamBuffer os) {
+        //os.writeInt(lockID);
         os.writeInt(bbCapacity);
         os.writeInt(elements);
         os.writeInt(elementSize);
