@@ -33,9 +33,9 @@ import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.RawTypeArgs;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SharedPtr;
+import org.finroc.jc.annotation.SkipArgs;
 import org.finroc.log.LogLevel;
 import org.finroc.serialization.DataTypeBase;
-import org.finroc.serialization.MemoryBuffer;
 import org.finroc.serialization.PortDataList;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
@@ -99,44 +99,50 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
 
     /**
      * @param description Name/Uid of blackboard
+     * @param type Data Type of blackboard content
      */
     @JavaOnly
-    public BlackboardServer(String description) {
-        this(description, null);
+    @SkipArgs("2")
+    public BlackboardServer(String description, DataTypeBase type) {
+        this(description, null, type);
     }
 
     /**
      * @param description Name/Uid of blackboard
-     * @parent parent of BlackboardServer
-     */
-    public BlackboardServer(String description, @CppDefault("NULL") FrameworkElement parent) {
-        this(description, MemoryBuffer.TYPE, parent, true);
-    }
-
-    /**
-     * @param description Name/Uid of blackboard
+     * @param parent of BlackboardServer
      * @param type Data Type of blackboard content
+     */
+    @JavaOnly
+    @SkipArgs("3")
+    public BlackboardServer(String description, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
+        this(description, parent, true, type);
+    }
+
+    /**
+     * @param description Name/Uid of blackboard
      * @param capacity Blackboard capacity (see BlackboardBuffer)
      * @param elements Number of element (see BlackboardBuffer)
      * @param elemSize Element size (see BlackboardBuffer)
      * @param parent parent of BlackboardServer
      * @param shared Share blackboard with other runtime environments?
+     * @param type Data Type of blackboard content
      */
-    public BlackboardServer(String description, DataTypeBase type, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared) {
-        this(description, type, parent, shared);
+    @SkipArgs("7")
+    public BlackboardServer(String description, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        this(description, parent, shared, type);
         resize(published, capacity, elements/*, elemSize, false*/);
     }
 
 
     /**
      * @param description Name/Uid of blackboard
-     * @param type Data Type of blackboard content
-     * @param mcType Type of method calls
      * @param parent parent of BlackboardServer
      * @param shared Share blackboard with other runtime environments?
+     * @param type Data Type of blackboard content
      */
+    @SkipArgs("4")
     @Init( {"locked()", "published()"})
-    public BlackboardServer(String description, DataTypeBase type, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared) {
+    public BlackboardServer(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
         super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
         PortCreationInfo readPci = new PortCreationInfo("read", this, type.getListType(), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1);
 

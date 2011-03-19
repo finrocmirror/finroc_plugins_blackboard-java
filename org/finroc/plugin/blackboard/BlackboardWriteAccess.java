@@ -35,13 +35,14 @@ import org.finroc.jc.annotation.RawTypeArgs;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SizeT;
 import org.finroc.serialization.PortDataList;
+import org.finroc.serialization.Serialization;
 
 /**
  * @author max
  *
  * Object to use for write-accessing blackboard
  */
-@IncludeClass(BBLockException.class)
+@IncludeClass( {BBLockException.class, Serialization.class})
 @PassByValue @NoVirtualDestructor @NoSuperclass @Inline @NoCpp @RawTypeArgs
 public class BlackboardWriteAccess<T> implements HasDestructor {
 

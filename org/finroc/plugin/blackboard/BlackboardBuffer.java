@@ -42,6 +42,28 @@ public class BlackboardBuffer extends MemoryBuffer {
     /** Number of entries and entry size */
     int bbCapacity, elements, elementSize;
 
+    /*Cpp
+    BlackboardBuffer(BlackboardBuffer&& o) :
+        rrlib::serialization::MemoryBuffer(std::_forward<rrlib::serialization::MemoryBuffer>(o)),
+        bbCapacity(0),
+        elements(0),
+        elementSize(0)
+    {
+        std::_swap(bbCapacity, o.bbCapacity);
+        std::_swap(elements, o.elements);
+        std::_swap(elementSize, o.elementSize);
+    }
+
+    BlackboardBuffer& operator=(BlackboardBuffer&& o)
+    {
+        rrlib::serialization::MemoryBuffer::operator=(std::_forward<rrlib::serialization::MemoryBuffer>(o));
+        std::_swap(bbCapacity, o.bbCapacity);
+        std::_swap(elements, o.elements);
+        std::_swap(elementSize, o.elementSize);
+        return *this;
+    }
+     */
+
     @Override
     public void deserialize(InputStreamBuffer is) {
         //lockID = is.readInt();

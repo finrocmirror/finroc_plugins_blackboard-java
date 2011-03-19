@@ -34,11 +34,15 @@ import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.PostInclude;
 import org.finroc.jc.annotation.RawTypeArgs;
 import org.finroc.jc.annotation.Ref;
+import org.finroc.jc.annotation.SkipArgs;
 import org.finroc.jc.log.LogDefinitions;
 import org.finroc.log.LogDomain;
 import org.finroc.log.LogLevel;
+import org.finroc.serialization.DataTypeBase;
 import org.finroc.serialization.PortDataList;
+import org.finroc.core.FrameworkElement;
 import org.finroc.core.port.PortCreationInfo;
+import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.std.PortDataManager;
 
@@ -84,13 +88,28 @@ public class BlackboardClient<T> {
     public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
 
     /**
-     * @param pci PortCreationInfo (relevant info: description (blackboard name), parent (of client), type (data type of blackboard content),
-     * flags (emit data => write port, accept data => read port
+     * @param description Name/Uid of blackboard
+     * @param parent Parent of blackboard client
+     * @param type Data Type of blackboard content
+     */
+    @JavaOnly
+    @SkipArgs("3")
+    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        this(description, parent, true, -1, true, true, type);
+    }
+
+    /**
+     * @param description Name/Uid of blackboard
+     * @param parent Parent of blackboard client
      * @param autoConnect Auto-Connect blackboard client to matching server?
      * @param autoConnectCategory If auto-connect is active: Limit auto-connecting to a specific blackboard category? (-1 is no)
+     * @param readPort Create read port?
+     * @param writePort Create write port?
+     * @param type Data Type of blackboard content
      */
-    public BlackboardClient(PortCreationInfo pci, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory) {
-        wrapped = new RawBlackboardClient(pci, (T)null, autoConnect, autoConnectCategory);
+    @SkipArgs("7")
+    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory, @CppDefault("true") boolean readPort, @CppDefault("true") boolean writePort, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        wrapped = new RawBlackboardClient(new PortCreationInfo(description, parent, type, (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0)), (T)null, autoConnect, autoConnectCategory);
     }
 
     /**

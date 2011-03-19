@@ -159,7 +159,7 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
      * @param src Source Buffer
      * @param target Target Buffer
      */
-    @InCpp("rrlib::serialization::deepcopy::copy(src, target, NULL);")
+    @InCpp("rrlib::serialization::_sSerialization::deepCopy(src, target, NULL);")
     public void copyBlackboardBuffer(@Const @CppType("BBVector") @Ref PortDataList<T> src, @Ref @CppType("BBVector") PortDataList<T> target) {
         target.copyFrom(src);
         //target.resize(src.getBbCapacity(), src.getElements(), src.getElementSize(), false);
@@ -407,7 +407,7 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
      * @param newCapacity new Capacity
      * @param newElements new current number of elements
      */
-    @InCpp("buf._resize(newElements);")
+    @InCpp("rrlib::serialization::_sSerialization::resizeVector(buf, newElements);")
     protected void resize(@Ref @CppType("BBVector") PortDataList<T> buf, int newCapacity, int newElements/*, int newElementSize, boolean keepContents*/) {
         buf.resize(newElements);
     }
