@@ -162,8 +162,8 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
     /**
      * @return Port data manager for buffer
      */
-    @InCpp("return core::PortDataManager::getManager(t);")
-    private static @Ptr <Q> PortDataManager getManager(@Ref @CppType("std::shared_ptr<Q>") Q t) {
+    @InCpp("return t.getManager();")
+    private static @Ptr <Q> PortDataManager getManager(@Ref @CppType("core::PortDataPtr<Q>") Q t) {
         return PortDataManager.getManager(t);
     }
 

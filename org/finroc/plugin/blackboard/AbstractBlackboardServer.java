@@ -21,6 +21,8 @@
  */
 package org.finroc.plugin.blackboard;
 
+import java.util.ArrayList;
+
 import org.finroc.jc.annotation.AtFront;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppDefault;
@@ -36,7 +38,6 @@ import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SizeT;
 import org.finroc.jc.annotation.Struct;
 import org.finroc.jc.annotation.Superclass;
-import org.finroc.jc.container.SimpleList;
 import org.finroc.jc.thread.ThreadUtil;
 import org.finroc.serialization.PortDataList;
 import org.finroc.core.FrameworkElement;
@@ -64,11 +65,11 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     /*Cpp
 
     typedef typename core::PortTypeMap<T>::ListType BBVector;
-    typedef typename std::shared_ptr<BBVector> BBVectorVar;
-    typedef typename std::shared_ptr<const BBVector> ConstBBVectorVar;
+    typedef typename core::PortDataPtr<BBVector> BBVectorVar;
+    typedef typename core::PortDataPtr<const BBVector> ConstBBVectorVar;
     typedef typename core::PortTypeMap<BBVector>::GenericChange ChangeTransaction;
-    typedef typename std::shared_ptr<ChangeTransaction> ChangeTransactionVar;
-    typedef typename std::shared_ptr<const ChangeTransaction> ConstChangeTransactionVar;
+    typedef typename core::PortDataPtr<ChangeTransaction> ChangeTransactionVar;
+    typedef typename core::PortDataPtr<const ChangeTransaction> ConstChangeTransactionVar;
 
     using AbstractBlackboardServerRaw::_M_handleCall;
 
@@ -84,6 +85,32 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
 
         // index for asynch change command
         int64_t index;
+
+        AsynchChangeTask(ConstChangeTransactionVar&& buffer_, int64_t offset_, int64_t index_) :
+            buffer(),
+            offset(offset_),
+            index(index_)
+        {
+            buffer = std::_move(buffer);
+        }
+
+        AsynchChangeTask(AsynchChangeTask && o) :
+            buffer(),
+            offset(0),
+            index(0)
+        {
+            std::_swap(buffer, o.buffer);
+            std::_swap(offset, o.offset);
+            std::_swap(index, o.index);
+        }
+
+        AsynchChangeTask& operator=(AsynchChangeTask && o)
+        {
+            std::_swap(buffer, o.buffer);
+            std::_swap(offset, o.offset);
+            std::_swap(index, o.index);
+            return *this;
+        }
     };
      */
 
@@ -92,8 +119,8 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
      * they don't lock and don't execute in an extra thread
      * may only be accessed in synchronized context
      */
-    @CppType("util::SimpleList<AsynchChangeTask>")
-    public final @PassByValue SimpleList<BlackboardTask> pendingAsynchChangeTasks = new SimpleList<BlackboardTask>();
+    @CppType("std::vector<AsynchChangeTask>")
+    public final @PassByValue ArrayList<BlackboardTask> pendingAsynchChangeTasks = new ArrayList<BlackboardTask>();
 
     // Methods...
 
@@ -222,7 +249,7 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     protected void processPendingAsynchChangeTasks() {
         for (@SizeT int i = 0; i < pendingAsynchChangeTasks.size(); i++) {
             @CppType("AsynchChangeTask")
-            BlackboardTask task = pendingAsynchChangeTasks.get(i);
+            @Ref BlackboardTask task = pendingAsynchChangeTasks.get(i);
             asynchChange(task.buffer, (int)task.index, (int)task.offset, false);
 
             //JavaOnlyBlock
@@ -241,8 +268,8 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
      * @param offset Offset offset to start writing
      * @param buf (Locked) buffer with contents to write
      */
+    @InCpp("pendingAsynchChangeTasks.push_back(AsynchChangeTask(std::_move(buf), offset, index));")
     protected void deferAsynchChangeCommand(@CppType("ConstChangeTransactionVar") PortDataList buf, int index, int offset) {
-        @InCpp("AsynchChangeTask task;")
         BlackboardTask task = getUnusedBlackboardTask();
         task.offset = offset;
         task.buffer = buf;
@@ -353,7 +380,7 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     }
 
     /*Cpp
-    void handleVoidCall(core::AbstractMethod* method, BBVectorVar p1) {
+    void handleVoidCall(core::AbstractMethod* method, BBVectorVar& p1) {
         if (method == &DIRECT_COMMIT) {
             directCommit(p1);
         } else if (method == &UNLOCK) {
@@ -395,7 +422,7 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     }
 
     @Override
-    public void handleVoidCall(AbstractMethod method, @CppType("ConstChangeTransactionVar") PortDataList p2, Integer index, Integer offset) throws MethodCallException {
+    public void handleVoidCall(AbstractMethod method, @Ref @CppType("ConstChangeTransactionVar") PortDataList p2, Integer index, Integer offset) throws MethodCallException {
         assert(method == ASYNCH_CHANGE);
         asynchChange(p2, index, offset, true);
     }

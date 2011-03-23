@@ -31,6 +31,7 @@ import org.finroc.jc.annotation.NoCpp;
 import org.finroc.jc.annotation.NoSuperclass;
 import org.finroc.jc.annotation.NoVirtualDestructor;
 import org.finroc.jc.annotation.PassByValue;
+import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.RawTypeArgs;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SizeT;
@@ -46,17 +47,17 @@ import org.finroc.serialization.PortDataList;
 public class BlackboardReadAccess<T> implements HasDestructor {
 
     /** Locked blackboard */
-    private BlackboardClient<T> blackboard;
+    @Ref private BlackboardClient<T> blackboard;
 
     /** not null - if buffer is currently locked for writing */
     @SuppressWarnings("rawtypes")
-    private @CppType("BlackboardClient<T>::ConstBBVectorVar") PortDataList locked;
+    private @Const @Ptr @CppType("BlackboardClient<T>::BBVectorVar") PortDataList locked;
 
     /**
      * @param blackboard Blackboard to access
      * @param timeout Timeout for lock (in ms)
      */
-    public BlackboardReadAccess(BlackboardClient<T> blackboard, @CppDefault("60000") int timeout) throws BBLockException {
+    public BlackboardReadAccess(@Ref BlackboardClient<T> blackboard, @CppDefault("60000") int timeout) throws BBLockException {
         this.blackboard = blackboard;
         locked = blackboard.readLock(false, timeout);
         if (locked == null) {

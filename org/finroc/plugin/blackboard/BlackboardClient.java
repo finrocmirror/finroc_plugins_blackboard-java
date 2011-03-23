@@ -32,6 +32,7 @@ import org.finroc.jc.annotation.Inline;
 import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.PostInclude;
+import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.RawTypeArgs;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SkipArgs;
@@ -159,10 +160,12 @@ public class BlackboardClient<T> {
      * @param index First element to change
      * @param offset Some custom offset in element (optional)
      */
-    @InCpp( {"assert(!core::PortDataManager::getManager(changeBuf)->isUnused() && \"Obtain buffer from getUnusedChangeBuffer()\");",
-             "AbstractBlackboardServer<T>::ASYNCH_CHANGE.call(*wrapped->getWritePort(), changeBuf, index, offset, true);"
+    @InCpp( {"assert(!changeBuf.getManager()->isUnused() && \"Obtain buffer from getUnusedChangeBuffer()\");",
+             "AbstractBlackboardServer<T>::ASYNCH_CHANGE.call(*wrapped->getWritePort(), static_cast<ConstChangeTransactionVar&>(changeBuf), index, offset, true);"
             })
     public void commitAsynchChange(@CppType("ChangeTransactionVar") PortDataList<T> changeBuf, int index, int offset) throws MethodCallException {
+
+        //JavaOnlyBlock
         assert(!PortDataManager.getManager(changeBuf).isUnused()) : "Obtain buffer from getUnusedChangeBuffer()";
         AbstractBlackboardServer.ASYNCH_CHANGE.call(wrapped.getWritePort(), changeBuf, index, offset, true);
     }
@@ -196,7 +199,7 @@ public class BlackboardClient<T> {
      * call unlock() after modifications are complete - locks of buffer should normally not be modified -
      * except of it should be used in some other port or stored for longer than the unlock() operation
      */
-    public @CppType("AbstractBlackboardServer<T>::BBVectorVar") PortDataList<T> writeLock(@CppDefault("60000") int timeout) {
+    public @Ptr @CppType("AbstractBlackboardServer<T>::BBVector") PortDataList<T> writeLock(@CppDefault("60000") int timeout) {
         if (timeout <= 0) {
             timeout = 60000; // wait one minute for method to complete if no time is specified
         }
@@ -214,24 +217,25 @@ public class BlackboardClient<T> {
 
                 //JavaOnlyBlock
                 wrapped.curLockID = (PortDataManager.getManager(ret)).lockID;
-
-                //Cpp wrapped->curLockID = core::PortDataManager::getManager(ret)->lockID;
-
                 locked = ret;
+
+                //Cpp wrapped->curLockID = ret.getManager()->lockID;
+                //Cpp locked = std::_move(ret);
 
                 // acknowledge lock
                 wrapped.sendKeepAlive();
             } else {
                 wrapped.curLockID = -1;
             }
-            return ret;
-        } catch (MethodCallException e) {
-            wrapped.curLockID = -1;
 
             //JavaOnlyBlock
-            return null;
+            return locked;
 
-            //Cpp return BBVectorVar();
+            //Cpp return locked.get();
+
+        } catch (MethodCallException e) {
+            wrapped.curLockID = -1;
+            return null;
         }
     }
 
@@ -246,7 +250,7 @@ public class BlackboardClient<T> {
      * @param timeout Timeout for call
      */
     @JavaOnly
-    @Const public @CppType("ConstBBVectorVar") PortDataList<T> readLock(@CppDefault("60000") int timeout) {
+    public @Const @Ptr @CppType("BBVectorVar") PortDataList<T> readLock(@CppDefault("60000") int timeout) {
         return readLock(false, timeout);
     }
 
@@ -261,7 +265,7 @@ public class BlackboardClient<T> {
      * @param forceReadCopyToAvoidBlocking Force read copy to avoid blocking? (only relevant for single buffered blackboard servers)
      * @param timeout Timeout for call
      */
-    public @CppType("AbstractBlackboardServer<T>::ConstBBVectorVar") PortDataList<T> readLock(@CppDefault("false") boolean forceReadCopyToAvoidBlocking, @CppDefault("60000") int timeout) {
+    public @Ptr @Const @CppType("AbstractBlackboardServer<T>::BBVector") PortDataList<T> readLock(@CppDefault("false") boolean forceReadCopyToAvoidBlocking, @CppDefault("60000") int timeout) {
         assert(locked == null && wrapped.lockType == RawBlackboardClient.LockType.NONE) : "Unlock first";
         if (timeout <= 0) {
             timeout = 60000; // wait one minute for method to complete if no time is specified
@@ -297,7 +301,7 @@ public class BlackboardClient<T> {
                     //JavaOnlyBlock
                     wrapped.curLockID = (PortDataManager.getManager(ret)).lockID;
 
-                    //Cpp wrapped->curLockID = core::PortDataManager::getManager(ret)->lockID;
+                    //Cpp wrapped->curLockID = ret.getManager()->lockID;
                     readLocked = ret;
 
                     // acknowledge lock
@@ -400,7 +404,7 @@ public class BlackboardClient<T> {
         //JavaOnlyBlock
         assert(!PortDataManager.getManager(buffer).isUnused()) : "Obtain buffer from getUnusedBuffer()";
 
-        //Cpp assert(!core::PortDataManager::getManager(buffer)->isUnused() && "Obtain buffer from getUnusedBuffer()");
+        //Cpp assert(!buffer.getManager()->isUnused() && "Obtain buffer from getUnusedBuffer()");
 
         /*if (buffer.getManager().isUnused()) {
             buffer.getManager().getCurrentRefCounter().setLocks((byte)1);

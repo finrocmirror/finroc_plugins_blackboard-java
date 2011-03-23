@@ -173,8 +173,8 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     /**
      * @return Port data manager for buffer
      */
-    @InCpp("return core::PortDataManager::getManager(t);")
-    private static @Ptr <Q> PortDataManager getManager(@Ref @CppType("std::shared_ptr<Q>") Q t) {
+    @InCpp("return t.getManager();")
+    private static @Ptr <Q> PortDataManager getManager(@Ref @CppType("core::PortDataPtr<Q>") Q t) {
         return PortDataManager.getManager(t);
     }
 
@@ -246,10 +246,10 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             //JavaOnlyBlock
             this.copyBlackboardBuffer(buffer, newBuffer);
             getManager(buffer).releaseLock();
+            buffer = newBuffer;
 
             //Cpp this->copyBlackboardBuffer(*buffer, *newBuffer);
-
-            buffer = newBuffer;
+            //Cpp buffer = std::_move(newBuffer);
 
             newBufferRevision(true);
             locks = 0;
@@ -390,14 +390,14 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 
         synchronized (bbLock) {
 
-            assert(newBuffer != buffer);
-
             // note: current lock is obsolete, since we have a completely new buffer
+            assert(newBuffer != buffer);
 
             //JavaOnlyBlock
             getManager(buffer).releaseLock();
-
             buffer = newBuffer;
+
+            //Cpp buffer = std::_move(newBuffer);
 
             // Clear any asynch change commands from queue, since they were for old buffer
             this.clearAsyncChangeTasks();
@@ -446,11 +446,12 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 
         if (readCopyRevision >= currentRevision) {
             // there's a copy... use this
-
-            //JavaOnlyBlock
             getManager(readCopy).addLock();
 
+            //JavaOnlyBlock
             return readCopy;
+
+            //Cpp return getManager(readCopy);
         }
 
         if (locks >= 0) {
@@ -458,11 +459,12 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             if (this.pendingTasks() || threadWaitingForCopy) { // there are others waiting... make copy
                 updateReadCopy();
                 assert(readCopyRevision >= currentRevision);
-
-                //JavaOnlyBlock
                 getManager(readCopy).addLock();
 
+                //JavaOnlyBlock
                 return readCopy;
+
+                //Cpp return getManager(readCopy);
             } else { // no one waiting... simply lock buffer
                 if (locks == 0) { // if this is the first lock: increment and set lock id of buffer
                     int lockIDNew = lockIDGen.incrementAndGet();
@@ -470,11 +472,12 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
                     getManager(buffer).lockID = lockIDNew;
                 }
                 locks++;
-
-                //JavaOnlyBlock
                 getManager(buffer).addLock();
 
+                //JavaOnlyBlock
                 return buffer;
+
+                //Cpp return getManager(buffer);
             }
         }
 
@@ -566,10 +569,12 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             lockTime = Time.getCoarse();
             lastKeepAlive = lockTime;
 
-            //JavaOnlyBlock
             getManager(buffer).addLock();
 
+            //JavaOnlyBlock
             return buffer;
+
+            //Cpp return getManager(buffer);
         }
     }
 
@@ -641,8 +646,10 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 
                 //JavaOnlyBlock
                 getManager(buffer).releaseLock();
-
                 buffer = buf;
+
+                //Cpp buffer = std::_move(buf);
+
                 //System.out.println("Thread " + Thread.currentThread().toString() + ": lock = " + buffer.toString());
                 assert(getManager(buffer).isLocked());
             }
