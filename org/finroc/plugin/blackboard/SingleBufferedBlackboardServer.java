@@ -652,6 +652,8 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             if (buf != buffer) {
                 buffer = std::_move(buf);
                 assert(getManager(buffer)->isLocked());
+            } else {
+                buf._reset();
             }
              */
 

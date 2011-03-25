@@ -261,8 +261,8 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
         mgr.releaseLock();
         locked = null;
 
-        //Cpp readPort->publish(locked);
         //Cpp published = locked._get();
+        //Cpp readPort->publish(locked);
         //Cpp locked._reset();
 
         lockId = lockIDGen.incrementAndGet();
@@ -330,7 +330,11 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
 
             // commit new buffer
 
+            // JavaOnlyBlock
             locked = newBuffer;
+
+            //Cpp locked = std::_move(newBuffer);
+
             commitLocked();
 
             assert(locked == null);
@@ -406,13 +410,14 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
 
             duplicateAndLock();
 
-            //JavaOnlyBlock
             PortDataManager mgr = getManager(locked);
             assert(locked != null && mgr.isLocked());
-            mgr.addLock();
+            mgr.addLock(); // second lock for PortDataPtr duplication
 
+            //JavaOnlyBlock
             return locked; // return buffer with one read lock
-            //mc.setReturn(locked, false);
+
+            //Cpp return BBVectorVar(mgr);
         }
     }
 
@@ -458,7 +463,9 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
             /*Cpp
             if (buf != locked) {
                 locked = std::_move(buf);
-                assert(getManager(bufmgr)->isLocked());
+                assert(getManager(locked)->isLocked());
+            } else {
+                buf._reset();
             }
              */
 
