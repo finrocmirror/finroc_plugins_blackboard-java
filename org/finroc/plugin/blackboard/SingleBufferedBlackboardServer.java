@@ -277,6 +277,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 
     @Override
     protected boolean isLocked() {
+        //Cpp assert(buffer._get() != NULL && buffer.getManager() != NULL);
         return locks != 0;
     }
 
@@ -636,23 +637,24 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             assert(bufmgr.isLocked());
 
             lockId = lockIDGen.incrementAndGet();
-            if (buf == buffer) {
 
-                //JavaOnlyBlock
+            //JavaOnlyBlock
+            if (buf == buffer) {
                 // we got the same buffer back - we only need to release one lock from method call
                 bufmgr.releaseLock();
-
             } else {
-
-                //JavaOnlyBlock
                 getManager(buffer).releaseLock();
                 buffer = buf;
-
-                //Cpp buffer = std::_move(buf);
-
-                //System.out.println("Thread " + Thread.currentThread().toString() + ": lock = " + buffer.toString());
                 assert(getManager(buffer).isLocked());
             }
+
+            /*Cpp
+            if (buf != buffer) {
+                buffer = std::_move(buf);
+                assert(getManager(buffer)->isLocked());
+            }
+             */
+
             locks = 0;
             newBufferRevision(true);
 

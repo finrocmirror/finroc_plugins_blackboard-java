@@ -443,23 +443,24 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
             assert(locked != null);
             assert(bufmgr.isLocked());
 
+            //JavaOnlyBlock
             if (buf == locked) {
                 // we got the same buffer back - we only need to release one lock from method call
-
-                //JavaOnlyBlock
                 bufmgr.releaseLock();
                 assert(bufmgr.getCurReference().isLocked());
-
             } else {
-
+                getManager(locked).getCurrentRefCounter().releaseLock();
                 locked = buf;
                 //System.out.println("Thread " + Thread.currentThread().toString() + ": lock = " + locked.toString());
-
-                //JavaOnlyBlock
-                bufmgr.releaseLock();
-                assert(bufmgr.getCurReference().isLocked());
-
+                assert(getManager(locked).getCurReference().isLocked());
             }
+
+            /*Cpp
+            if (buf != locked) {
+                locked = std::_move(buf);
+                assert(getManager(bufmgr)->isLocked());
+            }
+             */
 
             commitLocked();
             this.processPendingCommands();
