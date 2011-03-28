@@ -274,18 +274,19 @@ public class BlackboardClient<T> {
         // determine whether blackboard server is single buffered
         wrapped.checkSingleBuffered();
         if (wrapped.serverBuffers == RawBlackboardClient.ServerBuffers.UNKNOWN) { // we currently have no partner (?)
-
-            //JavaOnlyBlock
             return null;
-
-            //Cpp return ConstBBVectorVar();
         }
 
         boolean viaPort = (wrapped.serverBuffers == RawBlackboardClient.ServerBuffers.MULTI) || wrapped.getReadPort().pushStrategy() || forceReadCopyToAvoidBlocking || wrapped.getWritePort().hasRemoteServer();
         if (viaPort) {
             wrapped.lockType = RawBlackboardClient.LockType.READ;
             wrapped.curLockID = -1;
-            return (readLocked = read(timeout));
+            readLocked = read(timeout);
+
+            //JavaOnlyBlock
+            return readLocked;
+
+            //Cpp return readLocked._get();
         } else {
 
             assert(locked == null && wrapped.lockType == RawBlackboardClient.LockType.NONE);
@@ -300,23 +301,25 @@ public class BlackboardClient<T> {
 
                     //JavaOnlyBlock
                     wrapped.curLockID = (PortDataManager.getManager(ret)).lockID;
+                    readLocked = ret;
 
                     //Cpp wrapped->curLockID = ret.getManager()->lockID;
-                    readLocked = ret;
+                    //Cpp readLocked = std::_move(ret);
 
                     // acknowledge lock
                     wrapped.sendKeepAlive();
+
+                    //JavaOnlyBlock
+                    return readLocked;
+
+                    //Cpp return readLocked._get();
                 } else {
                     wrapped.curLockID = -1;
+                    return null;
                 }
-                return ret;
             } catch (MethodCallException e) {
                 wrapped.curLockID = -1;
-
-                //JavaOnlyBlock
                 return null;
-
-                //Cpp return ConstBBVectorVar();
             }
         }
     }

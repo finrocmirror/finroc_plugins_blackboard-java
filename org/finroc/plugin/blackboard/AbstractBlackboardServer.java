@@ -125,7 +125,7 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     // Methods...
 
     /** Blackboard interface */
-    @PassByValue public static PortInterface METHODS = new PortInterface("Blackboard Interface");
+    @PassByValue public static PortInterface METHODS = new PortInterface("Blackboard Interface", true);
 
     /** Write Lock */
     @CppType("core::Port1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar, int>")
@@ -415,8 +415,8 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
         return writeLock(p1);
     }
 
-    @Override @Const
-    public @CppType("BBVectorVar") PortDataList handleCall(AbstractMethod method, Integer p1, Integer dummy) throws MethodCallException {
+    @Override
+    public @CppType("ConstBBVectorVar") PortDataList handleCall(AbstractMethod method, Integer p1, Integer dummy) throws MethodCallException {
         assert(method == READ_LOCK);
         return readLock(p1);
     }

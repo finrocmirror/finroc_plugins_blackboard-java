@@ -51,7 +51,7 @@ public class BlackboardReadAccess<T> implements HasDestructor {
 
     /** not null - if buffer is currently locked for writing */
     @SuppressWarnings("rawtypes")
-    private @Const @Ptr @CppType("BlackboardClient<T>::BBVectorVar") PortDataList locked;
+    private @Const @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList locked;
 
     /**
      * @param blackboard Blackboard to access
