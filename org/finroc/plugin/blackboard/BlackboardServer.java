@@ -104,18 +104,19 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
     @JavaOnly
     @SkipArgs("2")
     public BlackboardServer(String description, DataTypeBase type) {
-        this(description, null, type);
+        this(description, 0, null, type);
     }
 
     /**
      * @param description Name/Uid of blackboard
+     * @param elements Initial number of elements
      * @param parent of BlackboardServer
      * @param type Data Type of blackboard content
      */
     @JavaOnly
-    @SkipArgs("3")
-    public BlackboardServer(String description, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
-        this(description, parent, true, type);
+    @SkipArgs("4")
+    public BlackboardServer(String description, @CppDefault("0") int elements, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
+        this(description, elements, parent, true, type);
     }
 
     /**
@@ -129,22 +130,22 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
      */
     @SkipArgs("7")
     public BlackboardServer(String description, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        this(description, parent, shared, type);
-        resize(published, capacity, elements/*, elemSize, false*/);
+        this(description, elements, parent, shared, type);
     }
 
 
     /**
      * @param description Name/Uid of blackboard
+     * @param elements Initial number of elements
      * @param parent parent of BlackboardServer
      * @param shared Share blackboard with other runtime environments?
      * @param type Data Type of blackboard content
      */
-    @SkipArgs("4")
+    @SkipArgs("5")
     @Init( {"locked()", "published()"})
-    public BlackboardServer(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+    public BlackboardServer(String description, @CppDefault("0") int elements, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
         super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
-        PortCreationInfo readPci = new PortCreationInfo("read", this, type.getListType(), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1);
+        PortCreationInfo readPci = new PortCreationInfo("read", this, this.getBlackboardMethodType(type), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1);
 
         //JavaOnlyBlock
         readPort = new Port<PortDataList>(readPci);
@@ -157,6 +158,13 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
         writePortRaw = write;
         locked = null;
         setPublished(readPort.getDefaultBuffer());
+
+        //JavaOnlyBlock
+        resize(published, elements, elements);
+
+        //Cpp resize(*published, elements, elements);
+
+        BlackboardManager.getInstance().init();
     }
 
     /**

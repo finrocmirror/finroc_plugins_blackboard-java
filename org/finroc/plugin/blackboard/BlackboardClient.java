@@ -159,15 +159,25 @@ public class BlackboardClient<T> {
      * @param changeBuf Contents to write to this position (unlocked buffer retrieved via getUnusedBuffer OR a used buffer with an additional lock)
      * @param index First element to change
      * @param offset Some custom offset in element (optional)
+     * @return Did operation succeed? (usual reason for failing is that blackboard is not connected)
      */
-    @InCpp( {"assert(!changeBuf.getManager()->isUnused() && \"Obtain buffer from getUnusedChangeBuffer()\");",
-             "AbstractBlackboardServer<T>::ASYNCH_CHANGE.call(*wrapped->getWritePort(), static_cast<ConstChangeTransactionVar&>(changeBuf), index, offset, true);"
-            })
-    public void commitAsynchChange(@CppType("ChangeTransactionVar") PortDataList<T> changeBuf, int index, int offset) throws MethodCallException {
+    public boolean commitAsynchChange(@CppType("ChangeTransactionVar") PortDataList<T> changeBuf, int index, int offset) throws MethodCallException {
 
-        //JavaOnlyBlock
-        assert(!PortDataManager.getManager(changeBuf).isUnused()) : "Obtain buffer from getUnusedChangeBuffer()";
-        AbstractBlackboardServer.ASYNCH_CHANGE.call(wrapped.getWritePort(), changeBuf, index, offset, true);
+        try {
+
+            //JavaOnlyBlock
+            assert(!PortDataManager.getManager(changeBuf).isUnused()) : "Obtain buffer from getUnusedChangeBuffer()";
+            AbstractBlackboardServer.ASYNCH_CHANGE.call(wrapped.getWritePort(), changeBuf, index, offset, true);
+
+            /*Cpp
+            assert(!changeBuf.getManager()->isUnused() && "Obtain buffer from getUnusedChangeBuffer()");
+            AbstractBlackboardServer<T>::ASYNCH_CHANGE.call(*wrapped->getWritePort(), static_cast<ConstChangeTransactionVar&>(changeBuf), index, offset, true);
+             */
+
+            return true;
+        } catch (MethodCallException e) {
+            return false;
+        }
     }
 //
 //    /**

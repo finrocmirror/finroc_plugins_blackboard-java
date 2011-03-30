@@ -39,6 +39,7 @@ import org.finroc.jc.annotation.SizeT;
 import org.finroc.jc.annotation.Struct;
 import org.finroc.jc.annotation.Superclass;
 import org.finroc.jc.thread.ThreadUtil;
+import org.finroc.serialization.DataTypeBase;
 import org.finroc.serialization.PortDataList;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.port.rpc.MethodCallException;
@@ -449,5 +450,20 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     @InCpp("core::typeutil::applyChange(bb, *changes, index, offset);")
     protected void applyAsynchChange(@Ref @CppType("BBVector") PortDataList bb, @CppType("ConstChangeTransactionVar") PortDataList changes, int index, int offset) {
         bb.applyChange(changes, index, offset);
+    }
+
+    /**
+     * Helper for constructor
+     *
+     * @param dt DataType T
+     * @return Blackboard method type of write ports
+     */
+    protected DataTypeBase getBlackboardMethodType(DataTypeBase dt) {
+        DataTypeBase dtb = dt.getRelatedType();
+        if (dtb != null) {
+            return dtb;
+        }
+        BlackboardPlugin.<T>registerBlackboardType(dt);
+        return dt.getRelatedType();
     }
 }

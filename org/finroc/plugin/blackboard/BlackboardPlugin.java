@@ -23,10 +23,14 @@ package org.finroc.plugin.blackboard;
 
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppType;
+import org.finroc.jc.annotation.ForwardDecl;
+import org.finroc.jc.annotation.HAppend;
 import org.finroc.jc.annotation.InCpp;
+import org.finroc.jc.annotation.IncludeClass;
 import org.finroc.jc.annotation.Inline;
 import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassByValue;
+import org.finroc.jc.annotation.PostInclude;
 import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SkipArgs;
@@ -43,6 +47,9 @@ import org.finroc.core.portdatabase.RPCInterfaceType;
  * Object to initialize the blackboard 2 mechanism
  */
 //@CppInclude({"BlackboardBuffer.h", "core/portdatabase/DataType.h"})
+@ForwardDecl(AbstractBlackboardServer.class)
+@IncludeClass(RPCInterfaceType.class)
+@PostInclude("AbstractBlackboardServer.h")
 public class BlackboardPlugin implements Plugin {
 
 //  /** Marks copy-on-write blackboard server ports */
@@ -115,7 +122,7 @@ public class BlackboardPlugin implements Plugin {
      * @param name Blackboard buffer type name
      * @return Blackboard buffer type
      */
-    @Inline
+    @HAppend( {})
     public static <T> DataTypeBase registerBlackboardType(DataTypeBase dt, @Const @Ref String name) {
         String bb_name = "Blackboard<" + name + ">";
         DataTypeBase dtbb = DataTypeBase.findType(bb_name);

@@ -123,18 +123,19 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     @JavaOnly
     @SkipArgs("2")
     public SingleBufferedBlackboardServer(String description, DataTypeBase type) {
-        this(description, null, type);
+        this(description, 0, null, type);
     }
 
     /**
      * @param description Name/Uid of blackboard
+     * @param elements Initial number of elements
      * @param parent of BlackboardServer
      * @param type Data Type of blackboard content
      */
     @JavaOnly
-    @SkipArgs("3")
-    public SingleBufferedBlackboardServer(String description, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
-        this(description, parent, true, type);
+    @SkipArgs("4")
+    public SingleBufferedBlackboardServer(String description, int elements, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
+        this(description, elements, parent, true, type);
     }
 
     /**
@@ -148,26 +149,34 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      */
     @SkipArgs("7")
     public SingleBufferedBlackboardServer(String description, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        this(description, parent, shared, type);
-        resize(buffer, capacity, elements/*, elemSize, false*/);
+        this(description, elements, parent, shared, type);
+        //resize(buffer, capacity, elements/*, elemSize, false*/);
     }
 
     /**
      * @param description Name/Uid of blackboard
+     * @param elements Initial number of elements
      * @param parent parent of BlackboardServer
      * @param shared Share blackboard with other runtime environments?
      * @param type Data Type of blackboard content
      */
-    @SkipArgs("4")
+    @SkipArgs("5")
     @Init("buffer(write->getBufferForReturn<BBVector>())")
-    public SingleBufferedBlackboardServer(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+    public SingleBufferedBlackboardServer(String description, @CppDefault("0") int elements, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
         super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
         readPortRaw = new BBReadPort(new PortCreationInfo("read", this, type.getListType(), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
         readPortRaw.setPullRequestHandler(this);
         AbstractBlackboardServerRaw.checkType(type);
-        write = new InterfaceServerPort("write", this, type.getRelatedType(), this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
+        write = new InterfaceServerPort("write", this, this.getBlackboardMethodType(type), this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
         writePortRaw = write;
         buffer = write.getBufferForReturn(readPortRaw.getDataType());
+
+        //JavaOnlyBlock
+        resize(buffer, elements, elements);
+
+        //Cpp resize(*buffer, elements, elements);
+
+        BlackboardManager.getInstance().init();
     }
 
     /**
