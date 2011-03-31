@@ -150,7 +150,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     @SkipArgs("7")
     public SingleBufferedBlackboardServer(String description, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
         this(description, elements, parent, shared, type);
-        //resize(buffer, capacity, elements/*, elemSize, false*/);
+        //Cpp classicBlackboardResize(&((*buffer)[0]), capacity, elements, elemSize);
     }
 
     /**

@@ -35,6 +35,7 @@ import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.Struct;
 import org.finroc.jc.annotation.Superclass;
+import org.finroc.jc.annotation.VoidPtr;
 import org.finroc.jc.container.SimpleList;
 import org.finroc.jc.log.LogDefinitions;
 import org.finroc.jc.thread.ThreadUtil;
@@ -281,16 +282,22 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
         return isSingleBuffered() ? (byte)1 : (byte)0;
     }
 
-//    /**
-//     * (Only works in C++)
-//     * Retrieve size information for blackboard
-//     */
-//    @Virtual
-//    public void getSizeInfo(@SizeT @Ref int elementSize, @SizeT @Ref int elements, @SizeT @Ref int capacity) {
-//        @Const PortDataManagerRaw buf = (BlackboardBuffer)readPort.getLockedUnsafeRaw();
-//        elementSize = buf.getElementSize();
-//        elements = buf.getElements();
-//        capacity = buf.getBbCapacity();
-//        buf.getManager().releaseLock();
-//    }
+    /**
+     * Resize for Blackboards based on BlackboardBuffer (such as class MCA-style ones)
+     *
+     * @param buffer Blackboard buffer to resize
+     * @param capacity Blackboard capacity (see BlackboardBuffer)
+     * @param elements Number of element (see BlackboardBuffer)
+     * @param elemSize Element size (see BlackboardBuffer)
+     */
+    protected void classicBlackboardResize(BlackboardBuffer buffer, int capacity, int elements, int elemSize) {
+        buffer.resize(capacity, elements, elemSize, true);
+    }
+
+    /**
+     * Overload for non-blackboard-types
+     */
+    protected void classicBlackboardResize(@VoidPtr Object o, int capacity, int elements, int elemSize) {
+    }
+
 }
