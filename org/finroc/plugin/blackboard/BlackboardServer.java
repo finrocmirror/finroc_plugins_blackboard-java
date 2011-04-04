@@ -47,6 +47,7 @@ import org.finroc.core.port.rpc.InterfaceServerPort;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.std.PortBase;
 import org.finroc.core.port.std.PortDataManager;
+import org.finroc.core.portdatabase.FinrocTypeInfo;
 
 /**
  * @author max
@@ -91,7 +92,7 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
      * Currently published MemBuffer - not extra locked - attached to lock of read port
      * In single buffered mode - this is the one and only buffer
      */
-    private @CppType("BBVector*") PortDataList published;
+    private @Ptr @CppType("BBVector") PortDataList published;
 
     /** read port */
     @SharedPtr @CppType("core::Port<BBVector>")
@@ -146,6 +147,7 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
     @Init( {"locked()", "published()"})
     public BlackboardServer(String description, @CppDefault("0") int elements, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
         super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
+        assert(!FinrocTypeInfo.isMethodType(type)) : "Please provide data type of content here";
         PortCreationInfo readPci = new PortCreationInfo("read", this, this.getBlackboardMethodType(type), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1);
 
         //JavaOnlyBlock
@@ -160,10 +162,7 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
         locked = null;
         setPublished(readPort.getDefaultBuffer());
 
-        //JavaOnlyBlock
         resize(published, elements, elements);
-
-        //Cpp resize(*published, elements, elements);
 
         BlackboardManager.getInstance().init();
     }

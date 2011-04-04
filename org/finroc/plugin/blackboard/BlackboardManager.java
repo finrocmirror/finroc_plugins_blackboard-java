@@ -197,7 +197,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      *
      * @param name Blackboard name
      * @param category Blackboard Category (-1 all categories)
-     * @param type Data type of blackboard (null all types)
+     * @param type Data type of blackboard (null = all types)
      * @return Blackboard - or null if no blackboard could be found
      */
     public AbstractBlackboardServerRaw getBlackboard(@Const @Ref String name, int category, DataTypeBase type) {
@@ -212,10 +212,13 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
      * @param name Blackboard name
      * @param startCat category index to start looking (inclusive)
      * @param endCat end category index (inclusive)
-     * @param type Data type of blackboard (null all types)
+     * @param type Data type of blackboard (null = all types)
      * @return Blackboard - or null if no blackboard could be found
      */
     public AbstractBlackboardServerRaw getBlackboard(@Const @Ref String name, int startCat, int endCat, DataTypeBase type) {
+        if (type.getListType() != null) {
+            type = type.getListType();
+        }
         for (int c = startCat; c <= endCat; c++) {
             BlackboardCategory cat = categories[c];
             @Ptr ArrayWrapper<AbstractBlackboardServerRaw> it = cat.blackboards.getIterable();

@@ -21,7 +21,11 @@
  */
 package org.finroc.plugin.blackboard;
 
+import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.ConstMethod;
+import org.finroc.jc.annotation.HAppend;
+import org.finroc.jc.annotation.NonVirtual;
+import org.finroc.jc.annotation.Ref;
 import org.finroc.serialization.InputStreamBuffer;
 import org.finroc.serialization.MemoryBuffer;
 import org.finroc.serialization.OutputStreamBuffer;
@@ -185,5 +189,22 @@ public class BlackboardBuffer extends MemoryBuffer {
      */
     public int getElementOffset(int index) {
         return index * elementSize;
+    }
+
+    @Override @NonVirtual
+    public void copyFrom(MemoryBuffer source) {
+        copyFromBlackboardBuffer((BlackboardBuffer)source);
+    }
+
+    /**
+     * Implementation of copy operation
+     *
+     * @param source Source to copy data from
+     */
+    public void copyFromBlackboardBuffer(@Const @Ref BlackboardBuffer source) {
+        super.copyFrom(source);
+        bbCapacity = source.bbCapacity;
+        elements = source.elements;
+        elementSize = source.elementSize;
     }
 }
