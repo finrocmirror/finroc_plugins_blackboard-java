@@ -23,7 +23,6 @@ package org.finroc.plugin.blackboard;
 
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.ConstMethod;
-import org.finroc.jc.annotation.HAppend;
 import org.finroc.jc.annotation.NonVirtual;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.serialization.InputStreamBuffer;
