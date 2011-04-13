@@ -26,6 +26,7 @@ import org.finroc.jc.annotation.ConstMethod;
 import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.CppType;
 import org.finroc.jc.annotation.ForwardDecl;
+import org.finroc.jc.annotation.HAppend;
 import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.Include;
 import org.finroc.jc.annotation.Inline;
@@ -56,6 +57,10 @@ import org.finroc.core.port.std.PortDataManager;
 @ForwardDecl( {BlackboardReadAccess.class, BlackboardWriteAccess.class})
 @PostInclude( {"BlackboardReadAccess.h", "BlackboardWriteAccess.h"})
 @Include("core/port/PortUtil.h")
+@HAppend( {
+    "extern template class BlackboardClient<BlackboardBuffer>;",
+    "extern template class BlackboardClient<rrlib::serialization::MemoryBuffer>;"
+})
 public class BlackboardClient<T> {
 
     /*Cpp

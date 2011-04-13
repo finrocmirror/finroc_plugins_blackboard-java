@@ -25,6 +25,7 @@ import org.finroc.jc.AtomicInt;
 import org.finroc.jc.Time;
 import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.CppType;
+import org.finroc.jc.annotation.HAppend;
 import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.Init;
 import org.finroc.jc.annotation.JavaOnly;
@@ -56,6 +57,10 @@ import org.finroc.core.portdatabase.FinrocTypeInfo;
  */
 @Ptr @RawTypeArgs
 @SuppressWarnings( {"rawtypes", "unchecked"})
+@HAppend( {
+    "extern template class BlackboardServer<BlackboardBuffer>;",
+    "extern template class BlackboardServer<rrlib::serialization::MemoryBuffer>;"
+})
 public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
 
     /*Cpp
