@@ -489,5 +489,10 @@ public class BlackboardClient<T> {
         return wrapped;
     }
 
-
+    /**
+     * @return Blackboard name/description
+     */
+    public String getDescription() {
+        return wrapped.getDescription();
+    }
 }
