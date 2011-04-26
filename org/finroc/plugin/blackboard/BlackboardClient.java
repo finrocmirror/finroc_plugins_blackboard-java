@@ -115,7 +115,21 @@ public class BlackboardClient<T> {
      */
     @SkipArgs("7")
     public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory, @CppDefault("true") boolean readPort, @CppDefault("true") boolean writePort, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        wrapped = new RawBlackboardClient(new PortCreationInfo(description, parent, type, (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0)), (T)null, autoConnect, autoConnectCategory);
+        wrapped = new RawBlackboardClient(new PortCreationInfo(description, parent, initBlackboardType(type), (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0)), (T)null, autoConnect, autoConnectCategory);
+    }
+
+    /**
+     * Make sure specified type is registered for blackboards
+     *
+     * @param dt Type
+     * @return The same as parameter type
+     */
+    private DataTypeBase initBlackboardType(DataTypeBase dt) {
+        DataTypeBase dtb = dt.getRelatedType();
+        if (dtb == null) {
+            BlackboardPlugin.<T>registerBlackboardType(dt);
+        }
+        return dt;
     }
 
     /**

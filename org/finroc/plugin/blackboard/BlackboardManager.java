@@ -183,6 +183,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
         synchronized (RuntimeEnvironment.getInstance().getRegistryLock()) {
             if (instance == null) {
                 instance = new BlackboardManager();
+                instance.init();
                 RuntimeEnvironment.getInstance().addListener(instance);
 
                 // TODO do this properly
