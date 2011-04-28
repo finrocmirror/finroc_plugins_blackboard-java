@@ -127,7 +127,20 @@ public class BlackboardPlugin implements Plugin {
         String bb_name = "Blackboard<" + name + ">";
         DataTypeBase dtbb = DataTypeBase.findType(bb_name);
         if (dtbb == null) {
-            @InCpp("core::RPCInterfaceType rpct(bb_name, &AbstractBlackboardServer<T>::METHODS);")
+            /*Cpp
+            core::PortInterface* methods = &AbstractBlackboardServer<T>::METHODS;
+            methods->clear();
+            methods->addMethod(&AbstractBlackboardServer<T>::LOCK);
+            methods->addMethod(&AbstractBlackboardServer<T>::READ_LOCK);
+            methods->addMethod(&AbstractBlackboardServer<T>::UNLOCK);
+            methods->addMethod(&AbstractBlackboardServer<T>::READ_UNLOCK);
+            methods->addMethod(&AbstractBlackboardServer<T>::ASYNCH_CHANGE);
+            methods->addMethod(&AbstractBlackboardServer<T>::DIRECT_COMMIT);
+            methods->addMethod(&AbstractBlackboardServer<T>::IS_SINGLE_BUFFERED);
+            methods->addMethod(&AbstractBlackboardServer<T>::KEEP_ALIVE);
+             */
+
+            @InCpp("core::RPCInterfaceType rpct(bb_name, methods);")
             RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.METHODS);
             dtbb = rpct;
             dt.setRelatedType(dtbb);

@@ -131,22 +131,22 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     /** Write Lock */
     @CppType("core::Port1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar, int>")
     @PassByValue public static Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > LOCK =
-        new Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > (METHODS, "Lock", "timeout", true);
+        new Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > (METHODS, "Write Lock", "timeout", true);
 
     /** Read Lock (only useful for SingleBufferedBlackboardBuffers) */
     @CppType("core::Port2Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::ConstBBVectorVar, int, int>")
     @PassByValue public static Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > READ_LOCK =
-        new Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (METHODS, "Lock", "timeout", "dummy", true);
+        new Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (METHODS, "Read Lock", "timeout", "dummy", true);
 
     /** Write Unlock */
     @CppType("core::Void1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar>")
     @PassByValue public static Void1Method UNLOCK =
-        new Void1Method(METHODS, "Unlock", "Blackboard Buffer", false);
+        new Void1Method(METHODS, "Write Unlock", "Blackboard Buffer", false);
 
     /** Read Unlock */
     @CppType("core::Void1Method<AbstractBlackboardServer<T>*, int>")
     @PassByValue public static Void1Method READ_UNLOCK =
-        new Void1Method(METHODS, "Unlock", "Lock ID", false);
+        new Void1Method(METHODS, "Read Unlock", "Lock ID", false);
 
     /** Asynch Change */
     @CppType("core::Void3Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::ConstChangeTransactionVar, int, int>")
@@ -465,5 +465,13 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
         }
         BlackboardPlugin.<T>registerBlackboardType(dt);
         return dt.getRelatedType();
+    }
+
+    @Override
+    protected void postChildInit() {
+        // check that methods have correct indices
+        assert(LOCK.getMethodId() == 0);
+        assert(READ_LOCK.getMethodId() == 1);
+        super.postChildInit();
     }
 }
