@@ -298,7 +298,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
         if (changeType == RuntimeListener.ADD /*|| changeType == RuntimeListener.REMOVE || changeType == RuntimeListener.PRE_INIT*/) {
 
             // Is this a remote blackboard? -> Create proxy
-            if (element.getFlag(PortFlags.NETWORK_ELEMENT) && element.getFlag(PortFlags.IS_PORT)) {
+            if (element.getFlag(PortFlags.NETWORK_ELEMENT) && element.getFlag(PortFlags.IS_PORT) && (!element.isChildOf(this))) {
                 element.getQualifiedLink(tempBuffer);
                 String qname = tempBuffer.toString();
                 String name = getBlackboardNameFromQualifiedLink(tempBuffer.toString());
@@ -315,12 +315,12 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
                     }
                     if (read && info.readPortRaw == null) {
                         PortBase port = (PortBase)element;
-                        info.readPortRaw = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), PortFlags.OUTPUT_PROXY));
+                        info.readPortRaw = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), PortFlags.OUTPUT_PROXY | CoreFlags.NETWORK_ELEMENT));
                         info.init();
                         info.readPortRaw.connectToSource(qname);
                     } else if (write && info.writePortRaw == null) {
                         InterfacePort port = (InterfacePort)element;
-                        info.writePortRaw = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing);
+                        info.writePortRaw = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing, PortFlags.NETWORK_ELEMENT);
                         info.init();
                         info.writePortRaw.connectToSource(qname);
                     }
