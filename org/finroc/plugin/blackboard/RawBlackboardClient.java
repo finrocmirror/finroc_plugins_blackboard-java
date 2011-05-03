@@ -183,7 +183,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
      * @param autoConnectCategory If auto-connect is active: Limit auto-connecting to a specific blackboard category? (-1 is no)
      */
     @Inline
-    @Init( {"writePort(pci.getFlag(core::PortFlags::EMITS_DATA) ? new WritePort(this, pci.dataType.getRelatedType()) : NULL)",
+    @Init( {"writePort(pci.getFlag(core::PortFlags::EMITS_DATA) ? AbstractBlackboardServerRaw::getBlackboardTypeInfo(pci.dataType)->blackboardType) : NULL)",
             "isSingleBufferedFunc(_M_callIsSingleBuffered<T>)",
             "keepAliveFunc(_M_callKeepAlive<T>)"
            })
@@ -191,7 +191,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         super(pci.parent, pci.description);
         AbstractBlackboardServerRaw.checkType(pci.dataType);
         readPort = pci.getFlag(PortFlags.ACCEPTS_DATA) ? new ReadPort(new PortCreationInfo("read", this, pci.dataType.getListType(), PortFlags.ACCEPTS_DATA | (pci.flags & PortFlags.PUSH_STRATEGY))) : null;
-        writePort = pci.getFlag(PortFlags.EMITS_DATA) ? new WritePort(pci.dataType.getRelatedType()) : null ;
+        writePort = pci.getFlag(PortFlags.EMITS_DATA) ? new WritePort(AbstractBlackboardServer.getBlackboardTypeInfo(pci.dataType).blackboardType) : null ;
         this.autoConnect = autoConnect;
         this.autoConnectCategory = autoConnectCategory;
     }

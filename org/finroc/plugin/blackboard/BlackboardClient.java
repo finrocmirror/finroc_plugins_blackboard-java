@@ -125,8 +125,8 @@ public class BlackboardClient<T> {
      * @return The same as parameter type
      */
     private DataTypeBase initBlackboardType(DataTypeBase dt) {
-        DataTypeBase dtb = dt.getRelatedType();
-        if (dtb == null) {
+        BlackboardTypeInfo bti = AbstractBlackboardServerRaw.getBlackboardTypeInfo(dt);
+        if (bti == null || bti.blackboardType == null) {
             BlackboardPlugin.<T>registerBlackboardType(dt);
         }
         return dt;

@@ -29,6 +29,7 @@ import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.IncludeClass;
 import org.finroc.jc.annotation.Inline;
 import org.finroc.jc.annotation.JavaOnly;
+import org.finroc.jc.annotation.Managed;
 import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.PostInclude;
 import org.finroc.jc.annotation.Ptr;
@@ -143,8 +144,16 @@ public class BlackboardPlugin implements Plugin {
             @InCpp("core::RPCInterfaceType rpct(bb_name, methods);")
             RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.METHODS);
             dtbb = rpct;
-            dt.setRelatedType(dtbb);
-            dtbb.setRelatedType(dt);
+
+            // add annotation to element type
+            @Managed BlackboardTypeInfo bti = new BlackboardTypeInfo();
+            bti.blackboardType = dtbb;
+            dt.addAnnotation(bti);
+
+            // add annotation to blackboard type
+            @Managed BlackboardTypeInfo btibb = new BlackboardTypeInfo();
+            btibb.elementType = dt;
+            dtbb.addAnnotation(btibb);
         }
 
         return dtbb;

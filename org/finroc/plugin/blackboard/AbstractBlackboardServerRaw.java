@@ -56,7 +56,7 @@ import org.finroc.core.portdatabase.FinrocTypeInfo;
 /**
  * Abstract base class of all blackboard servers
  */
-@SuppressWarnings("rawtypes") @IncludeClass(InterfacePort.class)
+@SuppressWarnings("rawtypes") @IncludeClass( {InterfacePort.class, BlackboardTypeInfo.class})
 @Struct @AtFront @Ptr @Superclass( {FrameworkElement.class, AbstractMethodCallHandler.class})
 abstract class AbstractBlackboardServerRaw extends FrameworkElement implements Void1Handler, Method0Handler<Byte> {
 
@@ -124,12 +124,22 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
     }
 
     /**
+     * @param dt Data type
+     * @return Blackboard type info for data type
+     */
+    @InCpp("return dt.getAnnotation<BlackboardTypeInfo>();")
+    public static BlackboardTypeInfo getBlackboardTypeInfo(DataTypeBase dt) {
+        return dt.getAnnotation(BlackboardTypeInfo.class);
+    }
+
+    /**
      * Check whether this is a valid data type for blackboards
      *
      * @param dt Data type to check
      */
     public static void checkType(DataTypeBase dt) {
-        assert(dt.getRelatedType() != null && FinrocTypeInfo.isMethodType(dt.getRelatedType())) : "Please register Blackboard types using Blackboard2Plugin class";
+        BlackboardTypeInfo ti = getBlackboardTypeInfo(dt);
+        assert(ti != null && ti.blackboardType != null && FinrocTypeInfo.isMethodType(ti.blackboardType)) : "Please register Blackboard types using BlackboardPlugin class";
     }
 
 //    /**

@@ -54,7 +54,9 @@ import org.finroc.core.port.rpc.method.Void1Method;
 import org.finroc.core.port.rpc.method.Void3Handler;
 import org.finroc.core.port.rpc.method.Void3Method;
 
-/** Blackboard info */
+/**
+ * Abstract base class of all blackboard servers - typed version
+ */
 @SuppressWarnings("rawtypes")
 @Struct @AtFront @Ptr @Superclass( {AbstractBlackboardServerRaw.class})
 @Include("core/port/tPortTypeMap.h") @RawTypeArgs
@@ -459,12 +461,12 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
      * @return Blackboard method type of write ports
      */
     protected DataTypeBase getBlackboardMethodType(DataTypeBase dt) {
-        DataTypeBase dtb = dt.getRelatedType();
-        if (dtb != null) {
-            return dtb;
+        BlackboardTypeInfo ti = getBlackboardTypeInfo(dt);
+        if (ti != null && ti.blackboardType != null) {
+            return ti.blackboardType;
         }
         BlackboardPlugin.<T>registerBlackboardType(dt);
-        return dt.getRelatedType();
+        return getBlackboardTypeInfo(dt).blackboardType;
     }
 
     @Override

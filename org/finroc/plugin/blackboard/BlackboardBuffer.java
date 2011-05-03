@@ -25,6 +25,8 @@ import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.ConstMethod;
 import org.finroc.jc.annotation.NonVirtual;
 import org.finroc.jc.annotation.Ref;
+import org.finroc.serialization.DataType;
+import org.finroc.serialization.DataTypeBase;
 import org.finroc.serialization.InputStreamBuffer;
 import org.finroc.serialization.MemoryBuffer;
 import org.finroc.serialization.OutputStreamBuffer;
@@ -44,6 +46,9 @@ public class BlackboardBuffer extends MemoryBuffer {
 
     /** Number of entries and entry size */
     int bbCapacity, elements, elementSize;
+
+    /** Data type of this class */
+    @Const public final static DataTypeBase TYPE = new DataType<BlackboardBuffer>(BlackboardBuffer.class);
 
     /*Cpp
     BlackboardBuffer(BlackboardBuffer&& o) :

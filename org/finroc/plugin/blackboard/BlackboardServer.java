@@ -162,7 +162,7 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
 
         readPortRaw = (PortBase)readPort.getWrapped();
         AbstractBlackboardServerRaw.checkType(type);
-        write = new InterfaceServerPort("write", this, type.getRelatedType(), this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
+        write = new InterfaceServerPort("write", this, AbstractBlackboardServerRaw.getBlackboardTypeInfo(type).blackboardType, this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
         writePortRaw = write;
         locked = null;
         setPublished(readPort.getDefaultBuffer());
