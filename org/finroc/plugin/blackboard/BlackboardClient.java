@@ -511,4 +511,30 @@ public class BlackboardClient<T> {
     public String getDescription() {
         return wrapped.getDescription();
     }
+
+    /**
+     * (only works properly if pushUpdates in constructor was set to true)
+     *
+     * @return Has port changed since last changed-flag-reset?
+     */
+    @ConstMethod public boolean hasChanged() {
+        assert(wrapped.getReadPort() != null);
+        if (!wrapped.getReadPort().getFlag(PortFlags.PUSH_STRATEGY)) {
+            logDomain.log(LogLevel.LL_DEBUG_WARNING, getLogDescription(), "This method only works properly, when push strategy is used.");
+        }
+        return wrapped.getReadPort().hasChanged();
+    }
+
+    /**
+     * (only works properly if pushUpdates in constructor was set to true)
+     *
+     * Reset changed flag.
+     */
+    public void resetChanged() {
+        assert(wrapped.getReadPort() != null);
+        if (!wrapped.getReadPort().getFlag(PortFlags.PUSH_STRATEGY)) {
+            logDomain.log(LogLevel.LL_DEBUG_WARNING, getLogDescription(), "This method only works properly, when push strategy is used.");
+        }
+        wrapped.getReadPort().resetChanged();
+    }
 }
