@@ -96,26 +96,28 @@ public class BlackboardClient<T> {
     /**
      * @param description Name/Uid of blackboard
      * @param parent Parent of blackboard client
+     * @param pushUpdates Use push strategy? (Any blackboard updates will be pushed to read port; required for changed-flag to work properly; disabled by default (network-bandwidth))
      * @param type Data Type of blackboard content
      */
     @JavaOnly
-    @SkipArgs("3")
-    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        this(description, parent, true, -1, true, true, type);
+    @SkipArgs("4")
+    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        this(description, parent, pushUpdates, true, -1, true, true, type);
     }
 
     /**
      * @param description Name/Uid of blackboard
      * @param parent Parent of blackboard client
+     * @param pushUpdates Use push strategy? (Any blackboard updates will be pushed to read port; required for changed-flag to work properly; disabled by default (network-bandwidth))
      * @param autoConnect Auto-Connect blackboard client to matching server?
      * @param autoConnectCategory If auto-connect is active: Limit auto-connecting to a specific blackboard category? (-1 is no)
      * @param readPort Create read port?
      * @param writePort Create write port?
      * @param type Data Type of blackboard content
      */
-    @SkipArgs("7")
-    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory, @CppDefault("true") boolean readPort, @CppDefault("true") boolean writePort, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        wrapped = new RawBlackboardClient(new PortCreationInfo(description, parent, initBlackboardType(type), (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0)), (T)null, autoConnect, autoConnectCategory);
+    @SkipArgs("8")
+    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory, @CppDefault("true") boolean readPort, @CppDefault("true") boolean writePort, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        wrapped = new RawBlackboardClient(new PortCreationInfo(description, parent, initBlackboardType(type), (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0) | (pushUpdates ? PortFlags.PUSH_STRATEGY : 0)), (T)null, autoConnect, autoConnectCategory);
     }
 
     /**
