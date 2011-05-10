@@ -482,7 +482,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             //JavaOnlyBlock
             return readCopy;
 
-            //Cpp return getManager(readCopy);
+            //Cpp return ConstBBVectorVar(getManager(readCopy));
         }
 
         if (locks >= 0) {
@@ -495,7 +495,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
                 //JavaOnlyBlock
                 return readCopy;
 
-                //Cpp return getManager(readCopy);
+                //Cpp return ConstBBVectorVar(getManager(readCopy));
             } else { // no one waiting... simply lock buffer
                 if (locks == 0) { // if this is the first lock: increment and set lock id of buffer
                     int lockIDNew = lockIDGen.incrementAndGet();
@@ -508,7 +508,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
                 //JavaOnlyBlock
                 return buffer;
 
-                //Cpp return getManager(buffer);
+                //Cpp return ConstBBVectorVar(getManager(buffer));
             }
         }
 
@@ -605,7 +605,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             //JavaOnlyBlock
             return buffer;
 
-            //Cpp return getManager(buffer);
+            //Cpp return BBVectorVar(getManager(buffer));
         }
     }
 
