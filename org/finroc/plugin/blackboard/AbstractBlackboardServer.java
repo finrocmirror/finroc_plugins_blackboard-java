@@ -29,6 +29,7 @@ import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.CppType;
 import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.Include;
+import org.finroc.jc.annotation.IncludeClass;
 import org.finroc.jc.annotation.JavaOnly;
 import org.finroc.jc.annotation.PassByValue;
 import org.finroc.jc.annotation.PassLock;
@@ -60,6 +61,7 @@ import org.finroc.core.port.rpc.method.Void3Method;
 @SuppressWarnings("rawtypes")
 @Struct @AtFront @Ptr @Superclass( {AbstractBlackboardServerRaw.class})
 @Include("core/port/tPortTypeMap.h") @RawTypeArgs
+@IncludeClass(PortInterface.class)
 abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw implements
         Method1Handler<PortDataList, Integer>,
         Method2Handler<PortDataList, Integer, Integer>,
@@ -128,32 +130,33 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     // Methods...
 
     /** Blackboard interface */
-    @PassByValue public static PortInterface METHODS = new PortInterface("Blackboard Interface", true);
+    @JavaOnly
+    @PassByValue private static PortInterface METHODS = new PortInterface("Blackboard Interface", true);
 
     /** Write Lock */
     @CppType("core::Port1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar, int>")
     @PassByValue public static Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > LOCK =
-        new Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > (METHODS, "Write Lock", "timeout", true);
+        new Port1Method < AbstractBlackboardServer<?>, PortDataList, Integer > (getBlackboardInterface(), "Write Lock", "timeout", true);
 
     /** Read Lock (only useful for SingleBufferedBlackboardBuffers) */
     @CppType("core::Port2Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::ConstBBVectorVar, int, int>")
     @PassByValue public static Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > READ_LOCK =
-        new Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (METHODS, "Read Lock", "timeout", "dummy", true);
+        new Port2Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (getBlackboardInterface(), "Read Lock", "timeout", "dummy", true);
 
     /** Write Unlock */
     @CppType("core::Void1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar>")
     @PassByValue public static Void1Method UNLOCK =
-        new Void1Method(METHODS, "Write Unlock", "Blackboard Buffer", false);
+        new Void1Method(getBlackboardInterface(), "Write Unlock", "Blackboard Buffer", false);
 
     /** Read Unlock */
     @CppType("core::Void1Method<AbstractBlackboardServer<T>*, int>")
     @PassByValue public static Void1Method READ_UNLOCK =
-        new Void1Method(METHODS, "Read Unlock", "Lock ID", false);
+        new Void1Method(getBlackboardInterface(), "Read Unlock", "Lock ID", false);
 
     /** Asynch Change */
     @CppType("core::Void3Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::ConstChangeTransactionVar, int, int>")
     @PassByValue public static Void3Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > ASYNCH_CHANGE =
-        new Void3Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (METHODS, "Asynchronous Change", "Blackboard Buffer", "Start Index", "Custom Offset", false);
+        new Void3Method < AbstractBlackboardServer<?>, PortDataList, Integer, Integer > (getBlackboardInterface(), "Asynchronous Change", "Blackboard Buffer", "Start Index", "Custom Offset", false);
 
 //    /** Read part of blackboard (no extra thread with multi-buffered blackboards) */
 //    @PassByValue public static Port3Method<AbstractBlackboardServer, BlackboardBuffer, Integer, Integer, Integer> READ_PART =
@@ -162,17 +165,17 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
     /** Directly commit buffer */
     @CppType("core::Void1Method<AbstractBlackboardServer<T>*, typename AbstractBlackboardServer<T>::BBVectorVar>")
     @PassByValue public static Void1Method DIRECT_COMMIT =
-        new Void1Method(METHODS, "Direct Commit", "Buffer", false);
+        new Void1Method(getBlackboardInterface(), "Direct Commit", "Buffer", false);
 
     /** Is server a single-buffered blackboard server? */
     @CppType("core::Port0Method<AbstractBlackboardServer<T>*, int8>")
     @PassByValue public static Port0Method<AbstractBlackboardServer, Byte> IS_SINGLE_BUFFERED =
-        new Port0Method<AbstractBlackboardServer, Byte>(METHODS, "Is Single Buffered?", false);
+        new Port0Method<AbstractBlackboardServer, Byte>(getBlackboardInterface(), "Is Single Buffered?", false);
 
     /** Send keep-alive signal for lock */
     @CppType("core::Void1Method<AbstractBlackboardServer<T>*, int>")
     @PassByValue public static Void1Method KEEP_ALIVE =
-        new Void1Method(METHODS, "KeepAliveSignal", "Lock ID", false);
+        new Void1Method(getBlackboardInterface(), "KeepAliveSignal", "Lock ID", false);
 
     /**
      * @param bbName Blackboard name
@@ -180,6 +183,11 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
      */
     public AbstractBlackboardServer(String bbName, int category, @CppDefault("NULL") FrameworkElement parent) {
         super(bbName, category, parent);
+    }
+
+    @InCpp("static core::PortInterface pi(\"Blackboard Interface\", true); return pi;")
+    public static @Ref PortInterface getBlackboardInterface() {
+        return METHODS;
     }
 
     /**

@@ -129,7 +129,7 @@ public class BlackboardPlugin implements Plugin {
         DataTypeBase dtbb = DataTypeBase.findType(bb_name);
         if (dtbb == null) {
             /*Cpp
-            core::PortInterface* methods = &AbstractBlackboardServer<T>::METHODS;
+            core::PortInterface* methods = &AbstractBlackboardServer<T>::getBlackboardInterface();
             methods->clear();
             methods->addMethod(&AbstractBlackboardServer<T>::LOCK);
             methods->addMethod(&AbstractBlackboardServer<T>::READ_LOCK);
@@ -142,7 +142,7 @@ public class BlackboardPlugin implements Plugin {
              */
 
             @InCpp("core::RPCInterfaceType rpct(bb_name, methods);")
-            RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.METHODS);
+            RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.getBlackboardInterface());
             dtbb = rpct;
 
             // add annotation to element type
