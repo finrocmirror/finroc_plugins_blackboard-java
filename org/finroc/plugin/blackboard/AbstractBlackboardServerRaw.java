@@ -26,6 +26,7 @@ import org.finroc.jc.Time;
 import org.finroc.jc.annotation.AtFront;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppDefault;
+import org.finroc.jc.annotation.CppUnused;
 import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.IncludeClass;
 import org.finroc.jc.annotation.JavaOnly;
@@ -138,6 +139,7 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
      * @param dt Data type to check
      */
     public static void checkType(DataTypeBase dt) {
+        @CppUnused
         BlackboardTypeInfo ti = getBlackboardTypeInfo(dt);
         assert(ti != null && ti.blackboardType != null && FinrocTypeInfo.isMethodType(ti.blackboardType)) : "Please register Blackboard types using BlackboardPlugin class";
     }

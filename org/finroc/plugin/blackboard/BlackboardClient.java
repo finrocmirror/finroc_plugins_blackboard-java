@@ -105,6 +105,17 @@ public class BlackboardClient<T> {
         this(description, parent, pushUpdates, true, -1, true, true, type);
     }
 
+    /*Cpp
+    // Empty constructor for blackboard clients that are not initialized in
+    // class initializer list (but later)
+    BlackboardClient() :
+      wrapped(NULL),
+      locked(),
+      read_locked()
+    {
+    }
+     */
+
     /**
      * @param description Name/Uid of blackboard
      * @param parent Parent of blackboard client
@@ -154,24 +165,17 @@ public class BlackboardClient<T> {
     public @CppType("ConstBBVectorVar") PortDataList<T> read() {
         return read(2000);
     }
-//
-//    /**
-//     * same as read(long) with automatic locking of buffer.
-//     * (needs to be released by calling ThreadLocalCache.getFast().releaseAllLocks())
-//     */
-//    @Inline
-//    @Const public BlackboardBuffer readAutoLocked(long timeout) {
-//        @Const BlackboardBuffer bb = read(timeout);
-//        ThreadLocalCache.getFast().addAutoLock(bb);
-//        return bb;
-//    }
-//
-//    @Inline
-//    @Const public BlackboardBuffer readAutoLocked() {
-//        return readAutoLocked(2000);
-//    }
-//
-//
+
+    /*Cpp
+    // move assignment
+    BlackboardClient& operator=(BlackboardClient && o) {
+        std::_swap(wrapped, o.wrapped);
+        std::_swap(locked, o.locked);
+        std::_swap(readLocked, o.readLocked);
+        return *this;
+    }
+     */
+
     /**
      * Commit asynchronous change to blackboard. Blackboard does
      * not need to be locked for this operation.
@@ -524,6 +528,12 @@ public class BlackboardClient<T> {
         }
         return wrapped.getReadPort().hasChanged();
     }
+
+    /*Cpp
+    operator bool() {
+        return wrapped != NULL;
+    }
+     */
 
     /**
      * (only works properly if pushUpdates in constructor was set to true)
