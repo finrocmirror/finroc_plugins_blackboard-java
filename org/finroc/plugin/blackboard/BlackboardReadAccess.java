@@ -22,9 +22,11 @@
 package org.finroc.plugin.blackboard;
 
 import org.finroc.jc.HasDestructor;
+import org.finroc.jc.Time;
 import org.finroc.jc.annotation.Const;
 import org.finroc.jc.annotation.CppDefault;
 import org.finroc.jc.annotation.CppType;
+import org.finroc.jc.annotation.InCpp;
 import org.finroc.jc.annotation.IncludeClass;
 import org.finroc.jc.annotation.Inline;
 import org.finroc.jc.annotation.NoCpp;
@@ -35,6 +37,9 @@ import org.finroc.jc.annotation.Ptr;
 import org.finroc.jc.annotation.RawTypeArgs;
 import org.finroc.jc.annotation.Ref;
 import org.finroc.jc.annotation.SizeT;
+import org.finroc.jc.log.LogDefinitions;
+import org.finroc.log.LogDomain;
+import org.finroc.log.LogLevel;
 import org.finroc.serialization.PortDataList;
 
 /**
@@ -46,6 +51,12 @@ import org.finroc.serialization.PortDataList;
 @PassByValue @NoVirtualDestructor @NoSuperclass @Inline @NoCpp @RawTypeArgs
 public class BlackboardReadAccess<T> implements HasDestructor {
 
+    /*Cpp
+    // no heap allocation permitted
+    void *operator new( size_t );
+    void *operator new[]( size_t );
+    */
+
     /** Locked blackboard */
     @Ref private BlackboardClient<T> blackboard;
 
@@ -53,13 +64,17 @@ public class BlackboardReadAccess<T> implements HasDestructor {
     @SuppressWarnings("rawtypes")
     private @Const @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList locked;
 
+    /** Log domain for this class */
+    @InCpp("_RRLIB_LOG_CREATE_NAMED_DOMAIN(logDomain, \"blackboard\");")
+    public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
+
     /**
      * @param blackboard Blackboard to access
      * @param timeout Timeout for lock (in ms)
      */
     public BlackboardReadAccess(@Ref BlackboardClient<T> blackboard, @CppDefault("60000") int timeout) throws BBLockException {
         this.blackboard = blackboard;
-        locked = blackboard.readLock(false, timeout);
+        locked = readLock(timeout);
         if (locked == null) {
 
             //JavaOnlyBlock
@@ -69,9 +84,20 @@ public class BlackboardReadAccess<T> implements HasDestructor {
         }
     }
 
+    @SuppressWarnings("rawtypes")
+    private @Const @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList readLock(@CppDefault("60000") int timeout) {
+        logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Acquiring read lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
+        return blackboard.readLock(false, timeout);
+    }
+
+    private @CppType("const char*") String getLogDescription() {
+        return "BlackboardWriteAccess";
+    }
+
     @Override
     public void delete() {
         if (locked != null) {
+            logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Releasing read lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
             blackboard.unlock();
         }
     }
