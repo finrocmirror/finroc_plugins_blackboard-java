@@ -19,24 +19,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
-import org.finroc.jc.annotation.Inline;
-import org.finroc.jc.annotation.NoCpp;
-import org.finroc.serialization.DataTypeAnnotation;
-import org.finroc.serialization.DataTypeBase;
+import org.rrlib.finroc_core_utils.jc.annotation.Inline;
+import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
+import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
 
 /**
  * @author max
  *
- * Additional type info for blackboards
+ * Thrown when blackboard lock takes too long
  */
 @Inline @NoCpp
-public class BlackboardTypeInfo extends DataTypeAnnotation {
+public class BBLockException extends Exception {
 
-    /** Blackboard (method) type */
-    public DataTypeBase blackboardType;
+    /** UID */
+    @JavaOnly private static final long serialVersionUID = 9062774085984248278L;
 
-    /** Blackboard element type */
-    public DataTypeBase elementType;
 }

@@ -19,17 +19,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
 import org.finroc.core.port.std.PortDataManager;
-import org.finroc.jc.annotation.Const;
-import org.finroc.jc.annotation.Inline;
-import org.finroc.jc.annotation.JavaOnly;
-import org.finroc.jc.annotation.NoCpp;
-import org.finroc.jc.annotation.PassByValue;
-import org.finroc.jc.annotation.Superclass;
-import org.finroc.jc.container.Reusable;
-import org.finroc.serialization.PortDataList;
+import org.rrlib.finroc_core_utils.jc.annotation.Const;
+import org.rrlib.finroc_core_utils.jc.annotation.Inline;
+import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
+import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
+import org.rrlib.finroc_core_utils.jc.annotation.PassByValue;
+import org.rrlib.finroc_core_utils.jc.annotation.Superclass;
+import org.rrlib.finroc_core_utils.jc.container.Reusable;
+import org.rrlib.finroc_core_utils.serialization.PortDataList;
 
 /**
  * @author max

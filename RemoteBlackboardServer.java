@@ -19,12 +19,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
-import org.finroc.jc.annotation.CppType;
-import org.finroc.jc.annotation.Inline;
-import org.finroc.jc.annotation.NoCpp;
-import org.finroc.serialization.PortDataList;
+import org.rrlib.finroc_core_utils.jc.annotation.CppType;
+import org.rrlib.finroc_core_utils.jc.annotation.Inline;
+import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
+import org.rrlib.finroc_core_utils.serialization.PortDataList;
 import org.finroc.core.datatype.CoreNumber;
 import org.finroc.core.port.rpc.MethodCallException;
 

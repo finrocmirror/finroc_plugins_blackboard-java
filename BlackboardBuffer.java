@@ -19,17 +19,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
-import org.finroc.jc.annotation.Const;
-import org.finroc.jc.annotation.ConstMethod;
-import org.finroc.jc.annotation.NonVirtual;
-import org.finroc.jc.annotation.Ref;
-import org.finroc.serialization.DataType;
-import org.finroc.serialization.DataTypeBase;
-import org.finroc.serialization.InputStreamBuffer;
-import org.finroc.serialization.MemoryBuffer;
-import org.finroc.serialization.OutputStreamBuffer;
+import org.rrlib.finroc_core_utils.jc.annotation.Const;
+import org.rrlib.finroc_core_utils.jc.annotation.ConstMethod;
+import org.rrlib.finroc_core_utils.jc.annotation.NonVirtual;
+import org.rrlib.finroc_core_utils.jc.annotation.Ref;
+import org.rrlib.finroc_core_utils.serialization.DataType;
+import org.rrlib.finroc_core_utils.serialization.DataTypeBase;
+import org.rrlib.finroc_core_utils.serialization.InputStreamBuffer;
+import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
+import org.rrlib.finroc_core_utils.serialization.OutputStreamBuffer;
 
 /**
  * @author max

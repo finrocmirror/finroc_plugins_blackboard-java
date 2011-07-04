@@ -19,22 +19,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
-import org.finroc.jc.annotation.AtFront;
-import org.finroc.jc.annotation.ConstMethod;
-import org.finroc.jc.annotation.CppDefault;
-import org.finroc.jc.annotation.Friend;
-import org.finroc.jc.annotation.InCpp;
-import org.finroc.jc.annotation.IncludeClass;
-import org.finroc.jc.annotation.Init;
-import org.finroc.jc.annotation.Inline;
-import org.finroc.jc.annotation.JavaOnly;
-import org.finroc.jc.annotation.Ptr;
-import org.finroc.jc.annotation.SharedPtr;
-import org.finroc.log.LogLevel;
-import org.finroc.serialization.DataTypeBase;
-import org.finroc.serialization.MemoryBuffer;
+import org.rrlib.finroc_core_utils.jc.annotation.AtFront;
+import org.rrlib.finroc_core_utils.jc.annotation.ConstMethod;
+import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
+import org.rrlib.finroc_core_utils.jc.annotation.Friend;
+import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
+import org.rrlib.finroc_core_utils.jc.annotation.IncludeClass;
+import org.rrlib.finroc_core_utils.jc.annotation.Init;
+import org.rrlib.finroc_core_utils.jc.annotation.Inline;
+import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
+import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
+import org.rrlib.finroc_core_utils.jc.annotation.SharedPtr;
+import org.rrlib.finroc_core_utils.log.LogLevel;
+import org.rrlib.finroc_core_utils.serialization.DataTypeBase;
+import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.port.AbstractPort;
 import org.finroc.core.port.PortCreationInfo;

@@ -19,23 +19,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
-import org.finroc.jc.ArrayWrapper;
-import org.finroc.jc.annotation.AtFront;
-import org.finroc.jc.annotation.Const;
-import org.finroc.jc.annotation.CppDefault;
-import org.finroc.jc.annotation.Friend;
-import org.finroc.jc.annotation.InCppFile;
-import org.finroc.jc.annotation.IncludeClass;
-import org.finroc.jc.annotation.Managed;
-import org.finroc.jc.annotation.Ptr;
-import org.finroc.jc.annotation.Ref;
-import org.finroc.jc.annotation.SizeT;
-import org.finroc.jc.container.SafeConcurrentlyIterableList;
-import org.finroc.jc.container.SimpleListWithMutex;
-import org.finroc.jc.thread.ThreadUtil;
-import org.finroc.serialization.DataTypeBase;
+import org.rrlib.finroc_core_utils.jc.ArrayWrapper;
+import org.rrlib.finroc_core_utils.jc.annotation.AtFront;
+import org.rrlib.finroc_core_utils.jc.annotation.Const;
+import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
+import org.rrlib.finroc_core_utils.jc.annotation.Friend;
+import org.rrlib.finroc_core_utils.jc.annotation.InCppFile;
+import org.rrlib.finroc_core_utils.jc.annotation.IncludeClass;
+import org.rrlib.finroc_core_utils.jc.annotation.Managed;
+import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
+import org.rrlib.finroc_core_utils.jc.annotation.Ref;
+import org.rrlib.finroc_core_utils.jc.annotation.SizeT;
+import org.rrlib.finroc_core_utils.jc.container.SafeConcurrentlyIterableList;
+import org.rrlib.finroc_core_utils.jc.container.SimpleListWithMutex;
+import org.rrlib.finroc_core_utils.jc.thread.ThreadUtil;
+import org.rrlib.finroc_core_utils.serialization.DataTypeBase;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;

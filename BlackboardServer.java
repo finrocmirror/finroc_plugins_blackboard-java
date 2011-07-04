@@ -19,25 +19,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
-import org.finroc.jc.AtomicInt;
-import org.finroc.jc.Time;
-import org.finroc.jc.annotation.CppDefault;
-import org.finroc.jc.annotation.CppType;
-import org.finroc.jc.annotation.HAppend;
-import org.finroc.jc.annotation.InCpp;
-import org.finroc.jc.annotation.Init;
-import org.finroc.jc.annotation.JavaOnly;
-import org.finroc.jc.annotation.PassLock;
-import org.finroc.jc.annotation.Ptr;
-import org.finroc.jc.annotation.RawTypeArgs;
-import org.finroc.jc.annotation.Ref;
-import org.finroc.jc.annotation.SharedPtr;
-import org.finroc.jc.annotation.SkipArgs;
-import org.finroc.log.LogLevel;
-import org.finroc.serialization.DataTypeBase;
-import org.finroc.serialization.PortDataList;
+import org.rrlib.finroc_core_utils.jc.AtomicInt;
+import org.rrlib.finroc_core_utils.jc.Time;
+import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
+import org.rrlib.finroc_core_utils.jc.annotation.CppType;
+import org.rrlib.finroc_core_utils.jc.annotation.HAppend;
+import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
+import org.rrlib.finroc_core_utils.jc.annotation.Init;
+import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
+import org.rrlib.finroc_core_utils.jc.annotation.PassLock;
+import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
+import org.rrlib.finroc_core_utils.jc.annotation.RawTypeArgs;
+import org.rrlib.finroc_core_utils.jc.annotation.Ref;
+import org.rrlib.finroc_core_utils.jc.annotation.SharedPtr;
+import org.rrlib.finroc_core_utils.jc.annotation.SkipArgs;
+import org.rrlib.finroc_core_utils.log.LogLevel;
+import org.rrlib.finroc_core_utils.serialization.DataTypeBase;
+import org.rrlib.finroc_core_utils.serialization.PortDataList;
 import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;

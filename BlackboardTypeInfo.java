@@ -2,7 +2,7 @@
  * You received this file as part of an advanced experimental
  * robotics framework prototype ('finroc')
  *
- * Copyright (C) 2007-2010 Max Reichardt,
+ * Copyright (C) 2011 Max Reichardt,
  *   Robotics Research Lab, University of Kaiserslautern
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +19,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+package org.finroc.plugins.blackboard;
 
-@Namespace("finroc::blackboard")
-@CppLocation("plugins/blackboard")
+import org.rrlib.finroc_core_utils.jc.annotation.Inline;
+import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
+import org.rrlib.finroc_core_utils.serialization.DataTypeAnnotation;
+import org.rrlib.finroc_core_utils.serialization.DataTypeBase;
 
 /**
- * This plugin provides an advanced multi-buffered
- * mostly asynchronous blackboard implementation.
+ * @author max
+ *
+ * Additional type info for blackboards
  */
-package org.finroc.plugin.blackboard;
+@Inline @NoCpp
+public class BlackboardTypeInfo extends DataTypeAnnotation {
 
-import org.finroc.jc.annotation.CppLocation;
-import org.finroc.jc.annotation.Namespace;
+    /** Blackboard (method) type */
+    public DataTypeBase blackboardType;
 
+    /** Blackboard element type */
+    public DataTypeBase elementType;
+}

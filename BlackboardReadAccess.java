@@ -19,37 +19,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
+package org.finroc.plugins.blackboard;
 
-import org.finroc.jc.HasDestructor;
-import org.finroc.jc.Time;
-import org.finroc.jc.annotation.CppDefault;
-import org.finroc.jc.annotation.CppType;
-import org.finroc.jc.annotation.InCpp;
-import org.finroc.jc.annotation.IncludeClass;
-import org.finroc.jc.annotation.Inline;
-import org.finroc.jc.annotation.NoCpp;
-import org.finroc.jc.annotation.NoSuperclass;
-import org.finroc.jc.annotation.NoVirtualDestructor;
-import org.finroc.jc.annotation.PassByValue;
-import org.finroc.jc.annotation.Ptr;
-import org.finroc.jc.annotation.RawTypeArgs;
-import org.finroc.jc.annotation.Ref;
-import org.finroc.jc.annotation.SizeT;
-import org.finroc.jc.log.LogDefinitions;
-import org.finroc.log.LogDomain;
-import org.finroc.log.LogLevel;
-import org.finroc.serialization.PortDataList;
-import org.finroc.serialization.Serialization;
+import org.rrlib.finroc_core_utils.jc.HasDestructor;
+import org.rrlib.finroc_core_utils.jc.Time;
+import org.rrlib.finroc_core_utils.jc.annotation.Const;
+import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
+import org.rrlib.finroc_core_utils.jc.annotation.CppType;
+import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
+import org.rrlib.finroc_core_utils.jc.annotation.IncludeClass;
+import org.rrlib.finroc_core_utils.jc.annotation.Inline;
+import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
+import org.rrlib.finroc_core_utils.jc.annotation.NoSuperclass;
+import org.rrlib.finroc_core_utils.jc.annotation.NoVirtualDestructor;
+import org.rrlib.finroc_core_utils.jc.annotation.PassByValue;
+import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
+import org.rrlib.finroc_core_utils.jc.annotation.RawTypeArgs;
+import org.rrlib.finroc_core_utils.jc.annotation.Ref;
+import org.rrlib.finroc_core_utils.jc.annotation.SizeT;
+import org.rrlib.finroc_core_utils.jc.log.LogDefinitions;
+import org.rrlib.finroc_core_utils.log.LogDomain;
+import org.rrlib.finroc_core_utils.log.LogLevel;
+import org.rrlib.finroc_core_utils.serialization.PortDataList;
 
 /**
  * @author max
  *
- * Object to use for write-accessing blackboard
+ * Object to use for read-accessing blackboard
  */
-@IncludeClass( {BBLockException.class, Serialization.class})
+@IncludeClass(BBLockException.class)
 @PassByValue @NoVirtualDestructor @NoSuperclass @Inline @NoCpp @RawTypeArgs
-public class BlackboardWriteAccess<T> implements HasDestructor {
+public class BlackboardReadAccess<T> implements HasDestructor {
 
     /*Cpp
     // no heap allocation permitted
@@ -62,7 +62,7 @@ public class BlackboardWriteAccess<T> implements HasDestructor {
 
     /** not null - if buffer is currently locked for writing */
     @SuppressWarnings("rawtypes")
-    private @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList locked;
+    private @Const @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList locked;
 
     /** Log domain for this class */
     @InCpp("_RRLIB_LOG_CREATE_NAMED_DOMAIN(logDomain, \"blackboard\");")
@@ -72,9 +72,9 @@ public class BlackboardWriteAccess<T> implements HasDestructor {
      * @param blackboard Blackboard to access
      * @param timeout Timeout for lock (in ms)
      */
-    public BlackboardWriteAccess(@Ref BlackboardClient<T> blackboard, @CppDefault("60000") int timeout) throws BBLockException {
+    public BlackboardReadAccess(@Ref BlackboardClient<T> blackboard, @CppDefault("60000") int timeout) throws BBLockException {
         this.blackboard = blackboard;
-        locked = writeLock(timeout);
+        locked = readLock(timeout);
         if (locked == null) {
 
             //JavaOnlyBlock
@@ -85,9 +85,9 @@ public class BlackboardWriteAccess<T> implements HasDestructor {
     }
 
     @SuppressWarnings("rawtypes")
-    private @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList writeLock(@CppDefault("60000") int timeout) {
-        logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Acquiring write lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
-        return blackboard.writeLock(timeout);
+    private @Const @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList readLock(@CppDefault("60000") int timeout) {
+        logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Acquiring read lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
+        return blackboard.readLock(false, timeout);
     }
 
     private @CppType("const char*") String getLogDescription() {
@@ -97,7 +97,7 @@ public class BlackboardWriteAccess<T> implements HasDestructor {
     @Override
     public void delete() {
         if (locked != null) {
-            logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Releasing write lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
+            logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Releasing read lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
             blackboard.unlock();
         }
     }
@@ -110,7 +110,7 @@ public class BlackboardWriteAccess<T> implements HasDestructor {
     }
 
     /*Cpp
-    inline T& operator[] (size_t index) {
+    inline const T& operator[] (size_t index) {
         return get(index);
     }
      */
@@ -120,21 +120,12 @@ public class BlackboardWriteAccess<T> implements HasDestructor {
      * @return Element at index
      */
     @SuppressWarnings("unchecked") @Inline
-    public @Ref T get(@SizeT int index) {
+    public @Const @Ref T get(@SizeT int index) {
         assert(index < size());
 
         //JavaOnlyBlock
         return (T)locked.get(index);
 
         //Cpp return (*locked)[index];
-    }
-
-    /**
-     * @param newSize New size (number of elements) in blackboard
-     */
-    public void resize(@SizeT int newSize) {
-        if (newSize != size()) {
-            locked.resize(newSize);
-        }
     }
 }

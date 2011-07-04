@@ -2,7 +2,7 @@
  * You received this file as part of an advanced experimental
  * robotics framework prototype ('finroc')
  *
- * Copyright (C) 2011 Max Reichardt,
+ * Copyright (C) 2007-2010 Max Reichardt,
  *   Robotics Research Lab, University of Kaiserslautern
  *
  * This program is free software; you can redistribute it and/or
@@ -19,21 +19,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.finroc.plugin.blackboard;
 
-import org.finroc.jc.annotation.Inline;
-import org.finroc.jc.annotation.JavaOnly;
-import org.finroc.jc.annotation.NoCpp;
+@Namespace("finroc::blackboard")
+@CppLocation("plugins/blackboard")
 
 /**
- * @author max
- *
- * Thrown when blackboard lock takes too long
+ * This plugin provides an advanced multi-buffered
+ * mostly asynchronous blackboard implementation.
  */
-@Inline @NoCpp
-public class BBLockException extends Exception {
+package org.finroc.plugins.blackboard;
 
-    /** UID */
-    @JavaOnly private static final long serialVersionUID = 9062774085984248278L;
+import org.rrlib.finroc_core_utils.jc.annotation.CppLocation;
+import org.rrlib.finroc_core_utils.jc.annotation.Namespace;
 
-}
