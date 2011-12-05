@@ -312,7 +312,7 @@ public class BlackboardClient<T> {
             return null;
         }
 
-        boolean viaPort = (wrapped.serverBuffers == RawBlackboardClient.ServerBuffers.MULTI) || wrapped.getReadPort().pushStrategy() || forceReadCopyToAvoidBlocking || wrapped.getWritePort().hasRemoteServer();
+        boolean viaPort = (wrapped.getReadPort() != null) && ((wrapped.serverBuffers == RawBlackboardClient.ServerBuffers.MULTI) || wrapped.getReadPort().pushStrategy() || forceReadCopyToAvoidBlocking || wrapped.getWritePort().hasRemoteServer());
         if (viaPort) {
             wrapped.lockType = RawBlackboardClient.LockType.READ;
             wrapped.curLockID = -1;
