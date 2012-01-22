@@ -63,9 +63,9 @@ import org.finroc.core.port.rpc.method.Void3Method;
 @Include("core/port/tPortTypeMap.h") @RawTypeArgs
 @IncludeClass(PortInterface.class)
 abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw implements
-        Method1Handler<PortDataList, Integer>,
-        Method2Handler<PortDataList, Integer, Integer>,
-            Void3Handler<PortDataList, Integer, Integer> {
+    Method1Handler<PortDataList, Integer>,
+    Method2Handler<PortDataList, Integer, Integer>,
+    Void3Handler<PortDataList, Integer, Integer> {
 
     /*Cpp
 
