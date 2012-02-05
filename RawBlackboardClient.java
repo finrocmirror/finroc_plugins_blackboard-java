@@ -177,7 +177,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     }
 
     /**
-     * @param pci PortCreationInfo (relevant info: description (blackboard name), parent (of client), type (data type of blackboard content),
+     * @param pci PortCreationInfo (relevant info: name (blackboard name), parent (of client), type (data type of blackboard content),
      * flags (emit data => write port, accept data => read port
      * @param autoConnect Auto-Connect blackboard client to matching server?
      * @param autoConnectCategory If auto-connect is active: Limit auto-connecting to a specific blackboard category? (-1 is no)
@@ -188,7 +188,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
             "keepAliveFunc(_M_callKeepAlive<T>)"
            })
     <T> RawBlackboardClient(PortCreationInfo pci, @Ptr T t, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory) {
-        super(pci.parent, pci.description);
+        super(pci.parent, pci.name);
         AbstractBlackboardServerRaw.checkType(pci.dataType);
         readPort = pci.getFlag(PortFlags.ACCEPTS_DATA) ? new ReadPort(new PortCreationInfo("read", this, pci.dataType.getListType(), PortFlags.ACCEPTS_DATA | (pci.flags & PortFlags.PUSH_STRATEGY))) : null;
         writePort = pci.getFlag(PortFlags.EMITS_DATA) ? new WritePort(AbstractBlackboardServer.getBlackboardTypeInfo(pci.dataType).blackboardType) : null ;
@@ -240,8 +240,8 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         if (writePort != null && server.writePortRaw.getDataType() != writePort.getDataType()) {
             return false; // data types don't fit
         }
-        if (!getDescription().equals(server.getDescription())) {
-            return false; // descriptions don't match
+        if (!getName().equals(server.getName())) {
+            return false; // names don't match
         }
 
         // checks passed => connect

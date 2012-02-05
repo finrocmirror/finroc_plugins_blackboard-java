@@ -86,7 +86,7 @@ public class BlackboardReadAccess<T> implements HasDestructor {
 
     @SuppressWarnings("rawtypes")
     private @Const @Ptr @CppType("BlackboardClient<T>::BBVector") PortDataList readLock(@CppDefault("60000") int timeout) {
-        logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Acquiring read lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
+        logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Acquiring read lock on blackboard '" + blackboard.getName() + "' at " + Time.getPrecise());
         return blackboard.readLock(false, timeout);
     }
 
@@ -97,7 +97,7 @@ public class BlackboardReadAccess<T> implements HasDestructor {
     @Override
     public void delete() {
         if (locked != null) {
-            logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Releasing read lock on blackboard '" + blackboard.getDescription() + "' at " + Time.getPrecise());
+            logDomain.log(LogLevel.LL_DEBUG_VERBOSE_1, getLogDescription(), "Releasing read lock on blackboard '" + blackboard.getName() + "' at " + Time.getPrecise());
             blackboard.unlock();
         }
     }

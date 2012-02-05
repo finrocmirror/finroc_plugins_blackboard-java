@@ -225,7 +225,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
             @Ptr ArrayWrapper<AbstractBlackboardServerRaw> it = cat.blackboards.getIterable();
             for (@SizeT int i = 0; i < it.size(); i++) {
                 @Ptr AbstractBlackboardServerRaw info = it.get(i);
-                if (info.getDescription().equals(name) && (type == null || info.readPortRaw.getDataType() == type)) {
+                if (info.getName().equals(name) && (type == null || info.readPortRaw.getDataType() == type)) {
                     return info;
                 }
             }

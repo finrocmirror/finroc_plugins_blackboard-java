@@ -123,29 +123,29 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     //private OutputStreamBuffer bufWriter = new OutputStreamBuffer();
 
     /**
-     * @param description Name/Uid of blackboard
+     * @param name Name/Uid of blackboard
      * @param type Data Type of blackboard content
      */
     @JavaOnly
     @SkipArgs("2")
-    public SingleBufferedBlackboardServer(String description, DataTypeBase type) {
-        this(description, 0, null, type);
+    public SingleBufferedBlackboardServer(String name, DataTypeBase type) {
+        this(name, 0, null, type);
     }
 
     /**
-     * @param description Name/Uid of blackboard
+     * @param name Name/Uid of blackboard
      * @param elements Initial number of elements
      * @param parent of BlackboardServer
      * @param type Data Type of blackboard content
      */
     @JavaOnly
     @SkipArgs("4")
-    public SingleBufferedBlackboardServer(String description, int elements, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
-        this(description, elements, parent, true, type);
+    public SingleBufferedBlackboardServer(String name, int elements, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
+        this(name, elements, parent, true, type);
     }
 
     /**
-     * @param description Name/Uid of blackboard
+     * @param name Name/Uid of blackboard
      * @param capacity Blackboard capacity (see BlackboardBuffer)
      * @param elements Number of element (see BlackboardBuffer)
      * @param elemSize Element size (see BlackboardBuffer)
@@ -155,8 +155,8 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      */
     @SkipArgs("7")
     @Init("buffer(write->getBufferForReturn<BBVector>())")
-    public SingleBufferedBlackboardServer(String description, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
+    public SingleBufferedBlackboardServer(String name, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        super(name, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
         assert(!FinrocTypeInfo.isMethodType(type)) : "Please provide data type of content here";
         readPortRaw = new BBReadPort(new PortCreationInfo("read", this, type.getListType(), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
         readPortRaw.setPullRequestHandler(this);
@@ -174,7 +174,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     }
 
     /**
-     * @param description Name/Uid of blackboard
+     * @param name Name/Uid of blackboard
      * @param elements Initial number of elements
      * @param parent parent of BlackboardServer
      * @param shared Share blackboard with other runtime environments?
@@ -182,8 +182,8 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      */
     @SkipArgs("5")
     @Init("buffer(write->getBufferForReturn<BBVector>())")
-    public SingleBufferedBlackboardServer(String description, @CppDefault("0") int elements, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        super(description, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
+    public SingleBufferedBlackboardServer(String name, @CppDefault("0") int elements, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        super(name, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
         assert(!FinrocTypeInfo.isMethodType(type)) : "Please provide data type of content here";
         readPortRaw = new BBReadPort(new PortCreationInfo("read", this, type.getListType(), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
         readPortRaw.setPullRequestHandler(this);

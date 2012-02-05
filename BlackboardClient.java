@@ -94,15 +94,15 @@ public class BlackboardClient<T> {
     public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
 
     /**
-     * @param description Name/Uid of blackboard
+     * @param name Name/Uid of blackboard
      * @param parent Parent of blackboard client
      * @param pushUpdates Use push strategy? (Any blackboard updates will be pushed to read port; required for changed-flag to work properly; disabled by default (network-bandwidth))
      * @param type Data Type of blackboard content
      */
     @JavaOnly
     @SkipArgs("4")
-    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        this(description, parent, pushUpdates, true, -1, true, true, type);
+    public BlackboardClient(String name, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        this(name, parent, pushUpdates, true, -1, true, true, type);
     }
 
     /*Cpp
@@ -117,7 +117,7 @@ public class BlackboardClient<T> {
      */
 
     /**
-     * @param description Name/Uid of blackboard
+     * @param name Name/Uid of blackboard
      * @param parent Parent of blackboard client
      * @param pushUpdates Use push strategy? (Any blackboard updates will be pushed to read port; required for changed-flag to work properly; disabled by default (network-bandwidth))
      * @param autoConnect Auto-Connect blackboard client to matching server?
@@ -127,8 +127,8 @@ public class BlackboardClient<T> {
      * @param type Data Type of blackboard content
      */
     @SkipArgs("8")
-    public BlackboardClient(String description, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory, @CppDefault("true") boolean readPort, @CppDefault("true") boolean writePort, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
-        wrapped = new RawBlackboardClient(new PortCreationInfo(description, parent, initBlackboardType(type), (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0) | (pushUpdates ? PortFlags.PUSH_STRATEGY : 0)), (T)null, autoConnect, autoConnectCategory);
+    public BlackboardClient(String name, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory, @CppDefault("true") boolean readPort, @CppDefault("true") boolean writePort, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+        wrapped = new RawBlackboardClient(new PortCreationInfo(name, parent, initBlackboardType(type), (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0) | (pushUpdates ? PortFlags.PUSH_STRATEGY : 0)), (T)null, autoConnect, autoConnectCategory);
     }
 
     /**
@@ -510,10 +510,10 @@ public class BlackboardClient<T> {
     }
 
     /**
-     * @return Blackboard name/description
+     * @return Blackboard name
      */
-    public String getDescription() {
-        return wrapped.getDescription();
+    public String getName() {
+        return wrapped.getName();
     }
 
     /**
