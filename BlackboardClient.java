@@ -40,7 +40,7 @@ import org.rrlib.finroc_core_utils.jc.annotation.SkipArgs;
 import org.rrlib.finroc_core_utils.jc.log.LogDefinitions;
 import org.rrlib.finroc_core_utils.log.LogDomain;
 import org.rrlib.finroc_core_utils.log.LogLevel;
-import org.rrlib.finroc_core_utils.serialization.DataTypeBase;
+import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.rrlib.finroc_core_utils.serialization.PortDataList;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.port.PortCreationInfo;
