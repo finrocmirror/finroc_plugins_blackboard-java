@@ -379,7 +379,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 
     @Override
     // provides blocking access to blackboard (without copying)
-    public PortDataManager pullRequest(PortBase origin, byte addLocks) {
+    public PortDataManager pullRequest(PortBase origin, byte addLocks, boolean intermediateAssign) {
 
         synchronized (bbLock) {
 
