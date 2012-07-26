@@ -317,12 +317,12 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
                         PortBase port = (PortBase)element;
                         info.readPortRaw = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), PortFlags.OUTPUT_PROXY | CoreFlags.NETWORK_ELEMENT));
                         info.init();
-                        info.readPortRaw.connectToSource(qname);
+                        info.readPortRaw.connectTo(qname, AbstractPort.ConnectDirection.TO_SOURCE, false);
                     } else if (write && info.writePortRaw == null) {
                         InterfacePort port = (InterfacePort)element;
                         info.writePortRaw = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing, PortFlags.NETWORK_ELEMENT);
                         info.init();
-                        info.writePortRaw.connectToSource(qname);
+                        info.writePortRaw.connectTo(qname, AbstractPort.ConnectDirection.TO_TARGET, false);
                     }
                     checkAutoConnect(info);
                 }

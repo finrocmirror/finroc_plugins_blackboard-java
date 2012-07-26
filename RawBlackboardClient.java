@@ -66,7 +66,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
             if (writePort != null) {
                 FrameworkElement w = partner.getParent().getChild("write");
                 if (w != null) {
-                    writePort.connectToSource((AbstractPort)w);
+                    writePort.connectTo((AbstractPort)w);
                 }
             }
             serverBuffers = ServerBuffers.UNKNOWN;
@@ -96,7 +96,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
             if (readPort != null) {
                 FrameworkElement w = partner.getParent().getChild("read");
                 if (w != null) {
-                    readPort.connectToSource((AbstractPort)w);
+                    readPort.connectTo((AbstractPort)w);
                 }
             }
             serverBuffers = ServerBuffers.UNKNOWN;
@@ -246,10 +246,10 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
 
         // checks passed => connect
         if (readPort != null) {
-            readPort.connectToSource(server.readPortRaw);
+            readPort.connectTo(server.readPortRaw);
         }
         if (writePort != null) {
-            writePort.connectToSource(server.writePortRaw);
+            writePort.connectTo(server.writePortRaw);
         }
         return true;
     }
