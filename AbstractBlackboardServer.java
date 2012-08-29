@@ -169,8 +169,8 @@ abstract class AbstractBlackboardServer<T> extends AbstractBlackboardServerRaw i
 
     /** Is server a single-buffered blackboard server? */
     @CppType("core::Port0Method<AbstractBlackboardServer<T>*, int8>")
-    @PassByValue public static Port0Method<AbstractBlackboardServer, Byte> IS_SINGLE_BUFFERED =
-        new Port0Method<AbstractBlackboardServer, Byte>(getBlackboardInterface(), "Is Single Buffered?", false);
+    @PassByValue public static Port0Method<AbstractBlackboardServer<Byte>, Byte> IS_SINGLE_BUFFERED =
+        new Port0Method<AbstractBlackboardServer<Byte>, Byte>(getBlackboardInterface(), "Is Single Buffered?", false);
 
     /** Send keep-alive signal for lock */
     @CppType("core::Void1Method<AbstractBlackboardServer<T>*, int>")
