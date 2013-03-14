@@ -21,22 +21,6 @@
  */
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.annotation.Const;
-import org.rrlib.finroc_core_utils.jc.annotation.ConstMethod;
-import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
-import org.rrlib.finroc_core_utils.jc.annotation.CppType;
-import org.rrlib.finroc_core_utils.jc.annotation.ForwardDecl;
-import org.rrlib.finroc_core_utils.jc.annotation.HAppend;
-import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
-import org.rrlib.finroc_core_utils.jc.annotation.Include;
-import org.rrlib.finroc_core_utils.jc.annotation.Inline;
-import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
-import org.rrlib.finroc_core_utils.jc.annotation.PassByValue;
-import org.rrlib.finroc_core_utils.jc.annotation.PostInclude;
-import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
-import org.rrlib.finroc_core_utils.jc.annotation.RawTypeArgs;
-import org.rrlib.finroc_core_utils.jc.annotation.Ref;
-import org.rrlib.finroc_core_utils.jc.annotation.SkipArgs;
 import org.rrlib.finroc_core_utils.jc.log.LogDefinitions;
 import org.rrlib.finroc_core_utils.log.LogDomain;
 import org.rrlib.finroc_core_utils.log.LogLevel;
@@ -49,48 +33,23 @@ import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.std.PortDataManager;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * This is the base class for a blackboard client
  */
-@SuppressWarnings( {"rawtypes", "unchecked"}) @PassByValue @RawTypeArgs
-@ForwardDecl( {BlackboardReadAccess.class, BlackboardWriteAccess.class})
-@PostInclude( {"BlackboardReadAccess.h", "BlackboardWriteAccess.h"})
-@Include("core/port/PortUtil.h")
-@HAppend( {
-    "extern template class BlackboardClient<BlackboardBuffer>;",
-    "extern template class BlackboardClient<rrlib::serialization::MemoryBuffer>;"
-})
+@SuppressWarnings( {"rawtypes", "unchecked"})
 public class BlackboardClient<T> {
-
-    /*Cpp
-    public:
-    typedef typename AbstractBlackboardServer<T>::BBVector BBVector;
-    typedef typename AbstractBlackboardServer<T>::BBVectorVar BBVectorVar;
-    typedef typename AbstractBlackboardServer<T>::ConstBBVectorVar ConstBBVectorVar;
-    typedef typename AbstractBlackboardServer<T>::ChangeTransaction ChangeTransaction;
-    typedef typename AbstractBlackboardServer<T>::ChangeTransactionVar ChangeTransactionVar;
-    typedef typename AbstractBlackboardServer<T>::ConstChangeTransactionVar ConstChangeTransactionVar;
-
-    private:
-    */
 
     /** Wrapped raw blackboard client */
     private RawBlackboardClient wrapped;
 
     /** not null - if buffer is currently locked for writing */
-    protected @CppType("BBVectorVar") PortDataList locked;
+    protected PortDataList locked;
 
     /** not null - if buffer is currently locked for writing */
-    protected @CppType("ConstBBVectorVar") PortDataList readLocked;
-
-    /*Cpp
-    typedef BlackboardWriteAccess<T> WriteAccess;
-    typedef BlackboardReadAccess<T> ReadAccess;
-    */
+    protected PortDataList readLocked;
 
     /** Log domain for this class */
-    @InCpp("_RRLIB_LOG_CREATE_NAMED_DOMAIN(logDomain, \"blackboard\");")
     public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
 
     /**
@@ -99,22 +58,9 @@ public class BlackboardClient<T> {
      * @param pushUpdates Use push strategy? (Any blackboard updates will be pushed to read port; required for changed-flag to work properly; disabled by default (network-bandwidth))
      * @param type Data Type of blackboard content
      */
-    @JavaOnly
-    @SkipArgs("4")
-    public BlackboardClient(String name, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+    public BlackboardClient(String name, FrameworkElement parent, boolean pushUpdates, DataTypeBase type) {
         this(name, parent, pushUpdates, true, -1, true, true, type);
     }
-
-    /*Cpp
-    // Empty constructor for blackboard clients that are not initialized in
-    // class initializer list (but later)
-    BlackboardClient() :
-      wrapped(NULL),
-      locked(),
-      read_locked()
-    {
-    }
-     */
 
     /**
      * @param name Name/Uid of blackboard
@@ -126,8 +72,7 @@ public class BlackboardClient<T> {
      * @param writePort Create write port?
      * @param type Data Type of blackboard content
      */
-    @SkipArgs("8")
-    public BlackboardClient(String name, @CppDefault("NULL") FrameworkElement parent, @CppDefault("false") boolean pushUpdates, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory, @CppDefault("true") boolean readPort, @CppDefault("true") boolean writePort, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+    public BlackboardClient(String name, FrameworkElement parent, boolean pushUpdates, boolean autoConnect, int autoConnectCategory, boolean readPort, boolean writePort, DataTypeBase type) {
         wrapped = new RawBlackboardClient(new PortCreationInfo(name, parent, initBlackboardType(type), (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0) | (pushUpdates ? PortFlags.PUSH_STRATEGY : 0)), (T)null, autoConnect, autoConnectCategory);
     }
 
@@ -152,29 +97,13 @@ public class BlackboardClient<T> {
      * @param timeout (relevant for SingleBufferedBlackboardClients only) Timeout for lock attempt
      * @return Raw memory buffer containing blackboard contents - locked - don't forget to release read lock
      */
-    @Inline
-    public @CppType("ConstBBVectorVar") PortDataList<T> read(long timeout) {
-
-        // JavaOnlyBlock
+    public PortDataList<T> read(long timeout) {
         return wrapped.getReadPort().getLockedUnsafeRaw().getObject().getData();
-
-        //Cpp return core::PortUtil<BBVector>::getValueWithLock(wrapped->getReadPort());
     }
 
-    @Inline
-    public @CppType("ConstBBVectorVar") PortDataList<T> read() {
+    public PortDataList<T> read() {
         return read(2000);
     }
-
-    /*Cpp
-    // move assignment
-    BlackboardClient& operator=(BlackboardClient && o) {
-        std::_swap(wrapped, o.wrapped);
-        std::_swap(locked, o.locked);
-        std::_swap(readLocked, o.readLocked);
-        return *this;
-    }
-     */
 
     /**
      * Commit asynchronous change to blackboard. Blackboard does
@@ -186,19 +115,11 @@ public class BlackboardClient<T> {
      * @param offset Some custom offset in element (optional)
      * @return Did operation succeed? (usual reason for failing is that blackboard is not connected)
      */
-    public boolean commitAsynchChange(@CppType("ChangeTransactionVar") PortDataList<T> changeBuf, int index, int offset) throws MethodCallException {
+    public boolean commitAsynchChange(PortDataList<T> changeBuf, int index, int offset) throws MethodCallException {
 
         try {
-
-            //JavaOnlyBlock
             assert(!PortDataManager.getManager(changeBuf).isUnused()) : "Obtain buffer from getUnusedChangeBuffer()";
             AbstractBlackboardServer.ASYNCH_CHANGE.call(wrapped.getWritePort(), changeBuf, index, offset, true);
-
-            /*Cpp
-            assert(!changeBuf.getManager()->isUnused() && "Obtain buffer from getUnusedChangeBuffer()");
-            AbstractBlackboardServer<T>::ASYNCH_CHANGE.call(*wrapped->getWritePort(), static_cast<ConstChangeTransactionVar&>(changeBuf), index, offset, true);
-             */
-
             return true;
         } catch (MethodCallException e) {
             return false;
@@ -234,7 +155,7 @@ public class BlackboardClient<T> {
      * call unlock() after modifications are complete - locks of buffer should normally not be modified -
      * except of it should be used in some other port or stored for longer than the unlock() operation
      */
-    public @Ptr @CppType("AbstractBlackboardServer<T>::BBVector") PortDataList<T> writeLock(@CppDefault("60000") int timeout) {
+    public PortDataList<T> writeLock(int timeout) {
         if (timeout <= 0) {
             timeout = 60000; // wait one minute for method to complete if no time is specified
         }
@@ -243,19 +164,12 @@ public class BlackboardClient<T> {
         assert(wrapped.curLockID == -1);
         assert(wrapped.isReady());
         try {
-
-            @InCpp("BBVectorVar ret = AbstractBlackboardServer<T>::LOCK.call(*wrapped->getWritePort(), timeout, static_cast<int>((timeout + RawBlackboardClient::NET_TIMEOUT)));")
             PortDataList ret = AbstractBlackboardServer.LOCK.call(wrapped.getWritePort(), timeout, (int)(timeout + RawBlackboardClient.NET_TIMEOUT));
 
             if (ret != null) {
                 wrapped.lockType = RawBlackboardClient.LockType.WRITE;
-
-                //JavaOnlyBlock
                 wrapped.curLockID = (PortDataManager.getManager(ret)).lockID;
                 locked = ret;
-
-                //Cpp wrapped->curLockID = ret.getManager()->lockID;
-                //Cpp locked = std::_move(ret);
 
                 // acknowledge lock
                 wrapped.sendKeepAlive();
@@ -263,11 +177,7 @@ public class BlackboardClient<T> {
                 wrapped.curLockID = -1;
             }
 
-            //JavaOnlyBlock
             return locked;
-
-            //Cpp return locked.get();
-
         } catch (MethodCallException e) {
             wrapped.curLockID = -1;
             return null;
@@ -284,8 +194,7 @@ public class BlackboardClient<T> {
      *
      * @param timeout Timeout for call
      */
-    @JavaOnly
-    public @Const @Ptr @CppType("BBVectorVar") PortDataList<T> readLock(@CppDefault("60000") int timeout) {
+    public PortDataList<T> readLock(int timeout) {
         return readLock(false, timeout);
     }
 
@@ -300,7 +209,7 @@ public class BlackboardClient<T> {
      * @param forceReadCopyToAvoidBlocking Force read copy to avoid blocking? (only relevant for single buffered blackboard servers)
      * @param timeout Timeout for call
      */
-    public @Ptr @Const @CppType("AbstractBlackboardServer<T>::BBVector") PortDataList<T> readLock(@CppDefault("false") boolean forceReadCopyToAvoidBlocking, @CppDefault("60000") int timeout) {
+    public PortDataList<T> readLock(boolean forceReadCopyToAvoidBlocking, int timeout) {
         assert(locked == null && wrapped.lockType == RawBlackboardClient.LockType.NONE) : "Unlock first";
         if (timeout <= 0) {
             timeout = 60000; // wait one minute for method to complete if no time is specified
@@ -317,37 +226,23 @@ public class BlackboardClient<T> {
             wrapped.lockType = RawBlackboardClient.LockType.READ;
             wrapped.curLockID = -1;
             readLocked = read(timeout);
-
-            //JavaOnlyBlock
             return readLocked;
-
-            //Cpp return readLocked._get();
         } else {
 
             assert(locked == null && wrapped.lockType == RawBlackboardClient.LockType.NONE);
             assert(wrapped.curLockID == -1);
             assert(wrapped.isReady());
             try {
-                @InCpp("ConstBBVectorVar ret = AbstractBlackboardServer<T>::READ_LOCK.call(*wrapped->getWritePort(), timeout, 0, static_cast<int>((timeout + RawBlackboardClient::NET_TIMEOUT)));")
                 PortDataList ret = AbstractBlackboardServer.READ_LOCK.call(wrapped.getWritePort(), timeout, 0, (int)(timeout + RawBlackboardClient.NET_TIMEOUT));
 
                 if (ret != null) {
                     wrapped.lockType = RawBlackboardClient.LockType.READ;
-
-                    //JavaOnlyBlock
                     wrapped.curLockID = (PortDataManager.getManager(ret)).lockID;
                     readLocked = ret;
 
-                    //Cpp wrapped->curLockID = ret.getManager()->lockID;
-                    //Cpp readLocked = std::_move(ret);
-
                     // acknowledge lock
                     wrapped.sendKeepAlive();
-
-                    //JavaOnlyBlock
                     return readLocked;
-
-                    //Cpp return readLocked._get();
                 } else {
                     wrapped.curLockID = -1;
                     return null;
@@ -362,16 +257,11 @@ public class BlackboardClient<T> {
     /**
      * Reset variables after unlock
      */
-    @Inline private void resetVariables() {
+    private void resetVariables() {
         wrapped.curLockID = -1;
         wrapped.lockType = RawBlackboardClient.LockType.NONE;
-
-        //JavaOnlyBlock
         locked = null;
         readLocked = null;
-
-        //Cpp locked._reset();
-        //Cpp readLocked._reset();
     }
 
     /**
@@ -389,17 +279,11 @@ public class BlackboardClient<T> {
             assert(readLocked != null);
             if (wrapped.curLockID >= 0) {
                 try {
-
-                    //JavaOnlyBlock
                     AbstractBlackboardServer.READ_UNLOCK.call(wrapped.getWritePort(), wrapped.curLockID, true);
-
-                    //Cpp AbstractBlackboardServer<T>::READ_UNLOCK.call(*wrapped->getWritePort(), wrapped->curLockID, true);
                 } catch (MethodCallException e) {
                     logDomain.log(LogLevel.LL_WARNING, getLogDescription(), "warning: Unlocking blackboard (read) failed", e);
                 }
             }
-
-            //JavaOnlyBlock
             PortDataManager.getManager(readLocked).releaseLock();
 
             resetVariables();
@@ -410,11 +294,7 @@ public class BlackboardClient<T> {
         assert(wrapped.curLockID >= 0);
 
         try {
-
-            //JavaOnlyBlock
             AbstractBlackboardServer.UNLOCK.call(wrapped.getWritePort(), locked, true);
-
-            //Cpp AbstractBlackboardServer<T>::UNLOCK.call(*wrapped->getWritePort(), locked, true);
         } catch (MethodCallException e) {
             logDomain.log(LogLevel.LL_WARNING, getLogDescription(), "warning: Unlocking blackboard failed");
             //e.printStackTrace();
@@ -425,8 +305,6 @@ public class BlackboardClient<T> {
     /**
      * @return log description
      */
-    @InCpp("return *wrapped;")
-    @ConstMethod @Const @Ref @CppType("core::FrameworkElement")
     protected String getLogDescription() {
         return wrapped.getLogDescription();
     }
@@ -436,23 +314,14 @@ public class BlackboardClient<T> {
      *
      * @param buffer Buffer to publish (unlocked buffer retrieved via getUnusedBuffer OR a used buffer with an additional lock)
      */
-    public void publish(@CppType("BBVectorVar") PortDataList<T> buffer) {
+    public void publish(PortDataList<T> buffer) {
         assert(wrapped.lockType == RawBlackboardClient.LockType.NONE);
-
-        //JavaOnlyBlock
         assert(!PortDataManager.getManager(buffer).isUnused()) : "Obtain buffer from getUnusedBuffer()";
-
-        //Cpp assert(!buffer.getManager()->isUnused() && "Obtain buffer from getUnusedBuffer()");
-
         /*if (buffer.getManager().isUnused()) {
             buffer.getManager().getCurrentRefCounter().setLocks((byte)1);
         }*/
         try {
-
-            //JavaOnlyBlock
             AbstractBlackboardServer.DIRECT_COMMIT.call(wrapped.getWritePort(), buffer, true);
-
-            //Cpp AbstractBlackboardServer<T>::DIRECT_COMMIT.call(*wrapped->getWritePort(), buffer, true);
         } catch (MethodCallException e) {
             logDomain.log(LogLevel.LL_WARNING, getLogDescription(), "warning: Blackboard direct commit failed");
         }
@@ -461,16 +330,14 @@ public class BlackboardClient<T> {
     /**
      * @return unused buffer - may be published/committed directly
      */
-    @InCpp("return wrapped->getWritePort()->getBufferForCall<BBVector>();")
-    public @CppType("BBVectorVar") PortDataList<T> getUnusedBuffer() {
+    public PortDataList<T> getUnusedBuffer() {
         return wrapped.getWritePort().getBufferForCall(wrapped.getReadPort().getDataType());
     }
 
     /**
      * @return unused change buffer - to be used in commitAsynchChange
      */
-    @InCpp("return wrapped->getWritePort()->getBufferForCall<ChangeTransaction>();")
-    public @CppType("ChangeTransactionVar") PortDataList<T> getUnusedChangeBuffer() {
+    public PortDataList<T> getUnusedChangeBuffer() {
         return wrapped.getWritePort().getBufferForCall(wrapped.getReadPort().getDataType());
     }
 
@@ -521,19 +388,13 @@ public class BlackboardClient<T> {
      *
      * @return Has port changed since last changed-flag-reset?
      */
-    @ConstMethod public boolean hasChanged() {
+    public boolean hasChanged() {
         assert(wrapped.getReadPort() != null);
         if (!wrapped.getReadPort().getFlag(PortFlags.PUSH_STRATEGY)) {
             logDomain.log(LogLevel.LL_DEBUG_WARNING, getLogDescription(), "This method only works properly, when push strategy is used.");
         }
         return wrapped.getReadPort().hasChanged();
     }
-
-    /*Cpp
-    operator bool() {
-        return wrapped != NULL;
-    }
-     */
 
     /**
      * (only works properly if pushUpdates in constructor was set to true)

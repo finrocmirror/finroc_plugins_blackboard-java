@@ -23,20 +23,6 @@ package org.finroc.plugins.blackboard;
 
 import org.rrlib.finroc_core_utils.jc.MutexLockOrderWithMonitor;
 import org.rrlib.finroc_core_utils.jc.Time;
-import org.rrlib.finroc_core_utils.jc.annotation.AtFront;
-import org.rrlib.finroc_core_utils.jc.annotation.Const;
-import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
-import org.rrlib.finroc_core_utils.jc.annotation.CppUnused;
-import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
-import org.rrlib.finroc_core_utils.jc.annotation.IncludeClass;
-import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
-import org.rrlib.finroc_core_utils.jc.annotation.PassByValue;
-import org.rrlib.finroc_core_utils.jc.annotation.PassLock;
-import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
-import org.rrlib.finroc_core_utils.jc.annotation.Ref;
-import org.rrlib.finroc_core_utils.jc.annotation.Struct;
-import org.rrlib.finroc_core_utils.jc.annotation.Superclass;
-import org.rrlib.finroc_core_utils.jc.annotation.VoidPtr;
 import org.rrlib.finroc_core_utils.jc.container.SimpleList;
 import org.rrlib.finroc_core_utils.jc.log.LogDefinitions;
 import org.rrlib.finroc_core_utils.jc.thread.ThreadUtil;
@@ -48,7 +34,6 @@ import org.finroc.core.LockOrderLevels;
 import org.finroc.core.port.rpc.InterfacePort;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.rpc.method.AbstractMethod;
-import org.finroc.core.port.rpc.method.AbstractMethodCallHandler;
 import org.finroc.core.port.rpc.method.Method0Handler;
 import org.finroc.core.port.rpc.method.Void1Handler;
 import org.finroc.core.port.std.PortBase;
@@ -57,8 +42,7 @@ import org.finroc.core.portdatabase.FinrocTypeInfo;
 /**
  * Abstract base class of all blackboard servers
  */
-@SuppressWarnings("rawtypes") @IncludeClass( {InterfacePort.class, BlackboardTypeInfo.class})
-@Struct @AtFront @Ptr @Superclass( {FrameworkElement.class, AbstractMethodCallHandler.class})
+@SuppressWarnings("rawtypes")
 abstract class AbstractBlackboardServerRaw extends FrameworkElement implements Void1Handler, Method0Handler<Byte> {
 
     /** Lock for blackboard operation (needs to be deeper than runtime - (for initial pushes etc.)) */
@@ -74,27 +58,25 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
     public final int categoryIndex;
 
     /** Blackboard category that this server belongs to */
-    public final @Ptr BlackboardManager.BlackboardCategory myCategory;
+    public final BlackboardManager.BlackboardCategory myCategory;
 
     /**
      * Queue with pending major commands (e.g. LOCK, READ_PART in SingleBufferedBlackboard)
      * They are executed in another thread
      * may only be accessed in synchronized context */
-    //@CppType("std::vector<BlackboardTask>")
-    protected final @PassByValue SimpleList<BlackboardTask> pendingMajorTasks = new SimpleList<BlackboardTask>();
+    protected final SimpleList<BlackboardTask> pendingMajorTasks = new SimpleList<BlackboardTask>();
 
     /** Uid of thread that is allowed to wake up now - after notifyAll() - thread should reset this to -1 as soon as possible */
     protected long wakeupThread = -1;
 
     /** Log domain for this class */
-    @InCpp("_RRLIB_LOG_CREATE_NAMED_DOMAIN(logDomain, \"blackboard\");")
     public static final LogDomain logDomain = LogDefinitions.finroc.getSubDomain("blackboard");
 
     /**
      * @param bbName Blackboard name
      * @param category Blackboard category (see constants in BlackboardManager)
      */
-    public AbstractBlackboardServerRaw(String bbName, int category, @CppDefault("NULL") FrameworkElement parent) {
+    public AbstractBlackboardServerRaw(String bbName, int category, FrameworkElement parent) {
         this(bbName, category, BlackboardManager.getInstance().getCategory(category).defaultFlags, parent);
     }
 
@@ -103,8 +85,7 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
      * @param category Blackboard category (see constants in BlackboardManager)
      * @param flags Flags for blackboard
      */
-    @JavaOnly
-    private AbstractBlackboardServerRaw(@Const @Ref String bbName, int category, int flags, @CppDefault("NULL") FrameworkElement parent) {
+    private AbstractBlackboardServerRaw(String bbName, int category, int flags, FrameworkElement parent) {
         super(parent == null ? BlackboardManager.getInstance().getCategory(category) : parent, bbName, flags, -1);
         myCategory = BlackboardManager.getInstance().getCategory(category);
         categoryIndex = category;
@@ -128,7 +109,6 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
      * @param dt Data type
      * @return Blackboard type info for data type
      */
-    @InCpp("return dt.getAnnotation<BlackboardTypeInfo>();")
     public static BlackboardTypeInfo getBlackboardTypeInfo(DataTypeBase dt) {
         return dt.getAnnotation(BlackboardTypeInfo.class);
     }
@@ -139,7 +119,6 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
      * @param dt Data type to check
      */
     public static void checkType(DataTypeBase dt) {
-        @CppUnused
         BlackboardTypeInfo ti = getBlackboardTypeInfo(dt);
         assert(ti != null && ti.blackboardType != null && FinrocTypeInfo.isMethodType(ti.blackboardType)) : "Please register Blackboard types using BlackboardPlugin class";
     }
@@ -158,7 +137,6 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
     /**
      * @return Unused blackboard task for pending tasks
      */
-    @JavaOnly
     protected BlackboardTask getUnusedBlackboardTask() {
         BlackboardTask task = BlackboardPlugin.taskPool.getUnused();
         if (task == null) {
@@ -177,9 +155,7 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
      * @param timeout Time to wait for lock
      * @return Do we have a lock now? (or did rather timeout expire?)
      */
-    @PassLock("bbLock")
     protected boolean waitForLock(/*@Const AbstractMethod method,*/ long timeout) {
-        @InCpp("BlackboardTask task;")
         BlackboardTask task = getUnusedBlackboardTask();
         //task.method = method;
         task.threadUid = ThreadUtil.getCurrentThreadId();
@@ -214,10 +190,7 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
         // ok, time seems to have run out - we have synchronized context though - so removing task is safe
         //System.out.println(createThreadString() + ": time has run out; isLocked() = " + isLocked());
         pendingMajorTasks.removeElem(task);
-
-        //JavaOnlyBlock
         task.recycle2();
-
         assert(isLocked()) : "Somebody forgot thread waiting on blackboard";
         return false;
     }
@@ -240,7 +213,6 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
      *
      * @return Were there any pending commands that are (were) now executed?
      */
-    @PassLock("bbLock")
     protected boolean processPendingCommands() {
         //System.out.println(createThreadString() + ": process pending commands");
         if (pendingMajorTasks.size() == 0) {
@@ -309,7 +281,7 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
     /**
      * Overload for non-blackboard-types
      */
-    protected void classicBlackboardResize(@VoidPtr Object o, int capacity, int elements, int elemSize) {
+    protected void classicBlackboardResize(Object o, int capacity, int elements, int elemSize) {
     }
 
 }

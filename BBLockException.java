@@ -21,19 +21,14 @@
  */
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.annotation.Inline;
-import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
-import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
-
 /**
- * @author max
+ * @author Max Reichardt
  *
  * Thrown when blackboard lock takes too long
  */
-@Inline @NoCpp
 public class BBLockException extends Exception {
 
     /** UID */
-    @JavaOnly private static final long serialVersionUID = 9062774085984248278L;
+    private static final long serialVersionUID = 9062774085984248278L;
 
 }

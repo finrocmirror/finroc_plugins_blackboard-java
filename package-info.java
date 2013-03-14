@@ -20,15 +20,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-@Namespace("finroc::blackboard")
-@CppLocation("plugins/blackboard")
-
 /**
  * This plugin provides an advanced multi-buffered
  * mostly asynchronous blackboard implementation.
  */
 package org.finroc.plugins.blackboard;
-
-import org.rrlib.finroc_core_utils.jc.annotation.CppLocation;
-import org.rrlib.finroc_core_utils.jc.annotation.Namespace;
-

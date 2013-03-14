@@ -21,19 +21,15 @@
  */
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.annotation.CppType;
-import org.rrlib.finroc_core_utils.jc.annotation.Inline;
-import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
 import org.rrlib.finroc_core_utils.serialization.PortDataList;
 import org.finroc.core.datatype.CoreNumber;
 import org.finroc.core.port.rpc.MethodCallException;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * Dummy object to handle/categorise remote blackboards
  */
-@Inline @NoCpp
 @SuppressWarnings("rawtypes")
 public class RemoteBlackboardServer extends AbstractBlackboardServer<CoreNumber> {
 
@@ -42,7 +38,7 @@ public class RemoteBlackboardServer extends AbstractBlackboardServer<CoreNumber>
     }
 
     @Override
-    protected void asynchChange(@CppType("ConstChangeTransactionVar") PortDataList buf, int index, int offset, boolean checkLock) {
+    protected void asynchChange(PortDataList buf, int index, int offset, boolean checkLock) {
         throw new RuntimeException("Operation not supported");
     }
 
@@ -62,7 +58,7 @@ public class RemoteBlackboardServer extends AbstractBlackboardServer<CoreNumber>
     }
 
     @Override
-    protected void directCommit(@CppType("BBVectorVar") PortDataList buf) {
+    protected void directCommit(PortDataList buf) {
         throw new RuntimeException("Operation not supported");
     }
 
@@ -72,7 +68,7 @@ public class RemoteBlackboardServer extends AbstractBlackboardServer<CoreNumber>
     }
 
     @Override
-    protected @CppType("ConstBBVectorVar") PortDataList readLock(long timeout) throws MethodCallException {
+    protected PortDataList readLock(long timeout) throws MethodCallException {
         throw new RuntimeException("Operation not supported");
     }
 
@@ -87,12 +83,12 @@ public class RemoteBlackboardServer extends AbstractBlackboardServer<CoreNumber>
     }
 
     @Override
-    protected @CppType("BBVectorVar")PortDataList writeLock(long timeout) {
+    protected PortDataList writeLock(long timeout) {
         throw new RuntimeException("Operation not supported");
     }
 
     @Override
-    protected void writeUnlock(@CppType("BBVectorVar") PortDataList buf) {
+    protected void writeUnlock(PortDataList buf) {
         throw new RuntimeException("Operation not supported");
     }
 }

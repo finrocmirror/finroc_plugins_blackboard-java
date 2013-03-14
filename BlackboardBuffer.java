@@ -21,10 +21,6 @@
  */
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.annotation.Const;
-import org.rrlib.finroc_core_utils.jc.annotation.ConstMethod;
-import org.rrlib.finroc_core_utils.jc.annotation.NonVirtual;
-import org.rrlib.finroc_core_utils.jc.annotation.Ref;
 import org.rrlib.finroc_core_utils.rtti.DataType;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.rrlib.finroc_core_utils.serialization.InputStreamBuffer;
@@ -32,7 +28,7 @@ import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
 import org.rrlib.finroc_core_utils.serialization.OutputStreamBuffer;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * Buffer containing blackboard data - in MCA style
  */
@@ -48,29 +44,7 @@ public class BlackboardBuffer extends MemoryBuffer {
     int bbCapacity, elements, elementSize;
 
     /** Data type of this class */
-    @Const public final static DataTypeBase TYPE = new DataType<BlackboardBuffer>(BlackboardBuffer.class);
-
-    /*Cpp
-    BlackboardBuffer(BlackboardBuffer&& o) :
-        rrlib::serialization::MemoryBuffer(std::_forward<rrlib::serialization::MemoryBuffer>(o)),
-        bbCapacity(0),
-        elements(0),
-        elementSize(0)
-    {
-        std::_swap(bbCapacity, o.bbCapacity);
-        std::_swap(elements, o.elements);
-        std::_swap(elementSize, o.elementSize);
-    }
-
-    BlackboardBuffer& operator=(BlackboardBuffer&& o)
-    {
-        rrlib::serialization::MemoryBuffer::operator=(std::_forward<rrlib::serialization::MemoryBuffer>(o));
-        std::_swap(bbCapacity, o.bbCapacity);
-        std::_swap(elements, o.elements);
-        std::_swap(elementSize, o.elementSize);
-        return *this;
-    }
-     */
+    public final static DataTypeBase TYPE = new DataType<BlackboardBuffer>(BlackboardBuffer.class);
 
     @Override
     public void deserialize(InputStreamBuffer is) {
@@ -151,37 +125,24 @@ public class BlackboardBuffer extends MemoryBuffer {
         curSize = newElements * newElementSize;
     }
 
-    /*Cpp
-    void* getElementPointer(int index) {
-        assert(index < elements);
-        return getBufferPointer(index * elementSize);
-    }
-
-    const void* getElementPointer(int index) const {
-        assert(index < elements);
-        return getBufferPointer(index * elementSize);
-    }
-
-     */
-
     /**
      * @return Number of elements that fit in blackboard
      */
-    @ConstMethod public int getBbCapacity() {
+    public int getBbCapacity() {
         return bbCapacity;
     }
 
     /**
      * @return Number of elements in blackboard
      */
-    @ConstMethod public int getElements() {
+    public int getElements() {
         return elements;
     }
 
     /**
      * @return Element size
      */
-    @ConstMethod public int getElementSize() {
+    public int getElementSize() {
         return elementSize;
     }
 
@@ -195,7 +156,7 @@ public class BlackboardBuffer extends MemoryBuffer {
         return index * elementSize;
     }
 
-    @Override @NonVirtual
+    @Override
     public void copyFrom(MemoryBuffer source) {
         copyFromBlackboardBuffer((BlackboardBuffer)source);
     }
@@ -205,7 +166,7 @@ public class BlackboardBuffer extends MemoryBuffer {
      *
      * @param source Source to copy data from
      */
-    public void copyFromBlackboardBuffer(@Const @Ref BlackboardBuffer source) {
+    public void copyFromBlackboardBuffer(BlackboardBuffer source) {
         super.copyFrom(source);
         bbCapacity = source.bbCapacity;
         elements = source.elements;

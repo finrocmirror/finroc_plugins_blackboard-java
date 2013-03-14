@@ -21,17 +21,14 @@
  */
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.annotation.Inline;
-import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
 import org.rrlib.finroc_core_utils.rtti.DataTypeAnnotation;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * Additional type info for blackboards
  */
-@Inline @NoCpp
 public class BlackboardTypeInfo extends DataTypeAnnotation {
 
     /** Blackboard (method) type */

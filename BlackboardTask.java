@@ -22,21 +22,14 @@
 package org.finroc.plugins.blackboard;
 
 import org.finroc.core.port.std.PortDataManager;
-import org.rrlib.finroc_core_utils.jc.annotation.Const;
-import org.rrlib.finroc_core_utils.jc.annotation.Inline;
-import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
-import org.rrlib.finroc_core_utils.jc.annotation.NoCpp;
-import org.rrlib.finroc_core_utils.jc.annotation.PassByValue;
-import org.rrlib.finroc_core_utils.jc.annotation.Superclass;
 import org.rrlib.finroc_core_utils.jc.container.Reusable;
 import org.rrlib.finroc_core_utils.serialization.PortDataList;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * Class to store pending blackboard tasks
  */
-@Inline @NoCpp @PassByValue @Superclass( {})
 public class BlackboardTask extends Reusable { /* implements Task */
 
     /** In case a thread is waiting on BlackboardServer - his uid - may only be changed in context synchronized to blackboard server */
@@ -44,16 +37,15 @@ public class BlackboardTask extends Reusable { /* implements Task */
 
     /** BlackboardBuffer to use for task - if this is set, it will be unlocked with recycle */
     @SuppressWarnings("rawtypes")
-    @JavaOnly @Const public PortDataList buffer;
+    public PortDataList buffer;
 
     /** Offset for asynch change command */
-    @JavaOnly public long offset;
+    public long offset;
 
     /** Start index for asynch change command */
-    @JavaOnly public int index;
+    public int index;
 
     /** Recycle task */
-    @JavaOnly
     public void recycle2() {
         if (buffer != null) {
             PortDataManager.getManager(buffer).releaseLock();
@@ -62,10 +54,4 @@ public class BlackboardTask extends Reusable { /* implements Task */
         //method = null;
         super.recycle();
     }
-
-    /*Cpp
-    bool operator==(const BlackboardTask& other) const {
-        return threadUid == other.threadUid;
-    }
-     */
 }

@@ -21,20 +21,6 @@
  */
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.annotation.Const;
-import org.rrlib.finroc_core_utils.jc.annotation.CppType;
-import org.rrlib.finroc_core_utils.jc.annotation.ForwardDecl;
-import org.rrlib.finroc_core_utils.jc.annotation.HAppend;
-import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
-import org.rrlib.finroc_core_utils.jc.annotation.IncludeClass;
-import org.rrlib.finroc_core_utils.jc.annotation.Inline;
-import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
-import org.rrlib.finroc_core_utils.jc.annotation.Managed;
-import org.rrlib.finroc_core_utils.jc.annotation.PassByValue;
-import org.rrlib.finroc_core_utils.jc.annotation.PostInclude;
-import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
-import org.rrlib.finroc_core_utils.jc.annotation.Ref;
-import org.rrlib.finroc_core_utils.jc.annotation.SkipArgs;
 import org.rrlib.finroc_core_utils.jc.container.ReusablesPoolCR;
 import org.rrlib.finroc_core_utils.rtti.DataType;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
@@ -43,22 +29,17 @@ import org.finroc.core.plugin.Plugin;
 import org.finroc.core.portdatabase.RPCInterfaceType;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * Object to initialize the blackboard 2 mechanism
  */
-//@CppInclude({"BlackboardBuffer.h", "core/portdatabase/DataType.h"})
-@ForwardDecl(AbstractBlackboardServer.class)
-@IncludeClass(RPCInterfaceType.class)
-@PostInclude("AbstractBlackboardServer.h")
 public class BlackboardPlugin implements Plugin {
 
 //  /** Marks copy-on-write blackboard server ports */
 //  public static int SINGLE_BUFFERED = PortFlags.FIRST_CUSTOM_PORT_FLAG;
 
     /** Reusable blackboard tasks */
-    @JavaOnly
-    @Ptr static ReusablesPoolCR<BlackboardTask> taskPool;
+    static ReusablesPoolCR<BlackboardTask> taskPool;
 
     public static DataTypeBase BB_MEM_BUFFER = registerBlackboardType(MemoryBuffer.class);
     public static DataTypeBase BB_BLACKBOARD_BUFFER = registerBlackboardType(BlackboardBuffer.class);
@@ -68,19 +49,9 @@ public class BlackboardPlugin implements Plugin {
 //        taskPool = new ReusablesPoolCR<BlackboardTask>();
 //        AutoDeleter.addStatic(taskPool);
 
-        //JavaOnlyBlock
         @SuppressWarnings("unused")
         DataTypeBase x = BlackboardBuffer.TYPE;
     }
-
-    /*Cpp
-    //wrapper for below
-    template <typename T>
-    static rrlib::serialization::DataTypeBase registerBlackboardType(const finroc::util::String& name) {
-        return registerBlackboardType<T>(finroc::util::TypedClass<T>(), name);
-    }
-
-     */
 
     /**
      * Registers blackboard data type
@@ -90,12 +61,9 @@ public class BlackboardPlugin implements Plugin {
      * @param name Blackboard buffer type name
      * @return Blackboard buffer type
      */
-    @Inline @SkipArgs("1")
-    public static <T> DataTypeBase registerBlackboardType(@PassByValue @CppType("finroc::util::TypedClass<T>") Class<T> clazz, @Const @Ref String name) {
-        @InCpp("rrlib::serialization::DataType<T> dt;")
+    public static <T> DataTypeBase registerBlackboardType(Class<T> clazz, String name) {
         DataTypeBase dt = DataTypeBase.findType(clazz);
 
-        //JavaOnlyBlock
         if (dt == null) {
             dt = new DataType<T>(clazz, name);
         }
@@ -110,7 +78,6 @@ public class BlackboardPlugin implements Plugin {
      * @param dt Data type to create blackboard type for
      * @return Blackboard buffer type
      */
-    @Inline
     public static <T> DataTypeBase registerBlackboardType(DataTypeBase dt) {
         return BlackboardPlugin.<T>registerBlackboardType(dt, dt.getName());
     }
@@ -123,35 +90,21 @@ public class BlackboardPlugin implements Plugin {
      * @param name Blackboard buffer type name
      * @return Blackboard buffer type
      */
-    @HAppend( {})
-    public static <T> DataTypeBase registerBlackboardType(DataTypeBase dt, @Const @Ref String name) {
+    public static <T> DataTypeBase registerBlackboardType(DataTypeBase dt, String name) {
         String bb_name = "Blackboard<" + name + ">";
         DataTypeBase dtbb = DataTypeBase.findType(bb_name);
         if (dtbb == null) {
-            /*Cpp
-            core::PortInterface* methods = &AbstractBlackboardServer<T>::getBlackboardInterface();
-            methods->clear();
-            methods->addMethod(&AbstractBlackboardServer<T>::LOCK);
-            methods->addMethod(&AbstractBlackboardServer<T>::READ_LOCK);
-            methods->addMethod(&AbstractBlackboardServer<T>::UNLOCK);
-            methods->addMethod(&AbstractBlackboardServer<T>::READ_UNLOCK);
-            methods->addMethod(&AbstractBlackboardServer<T>::ASYNCH_CHANGE);
-            methods->addMethod(&AbstractBlackboardServer<T>::DIRECT_COMMIT);
-            methods->addMethod(&AbstractBlackboardServer<T>::IS_SINGLE_BUFFERED);
-            methods->addMethod(&AbstractBlackboardServer<T>::KEEP_ALIVE);
-             */
 
-            @InCpp("core::RPCInterfaceType rpct(bb_name, methods);")
             RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.getBlackboardInterface());
             dtbb = rpct;
 
             // add annotation to element type
-            @Managed BlackboardTypeInfo bti = new BlackboardTypeInfo();
+            BlackboardTypeInfo bti = new BlackboardTypeInfo();
             bti.blackboardType = dtbb;
             dt.addAnnotation(bti);
 
             // add annotation to blackboard type
-            @Managed BlackboardTypeInfo btibb = new BlackboardTypeInfo();
+            BlackboardTypeInfo btibb = new BlackboardTypeInfo();
             btibb.elementType = dt;
             dtbb.addAnnotation(btibb);
         }
@@ -166,8 +119,7 @@ public class BlackboardPlugin implements Plugin {
      * @param clazz Type
      * @return Blackboard buffer type
      */
-    @InCpp("return registerBlackboardType(clazz, rrlib::serialization::DataTypeBase::getDataTypeNameFromRtti(typeid(T).name()));")
-    public static <T> DataTypeBase registerBlackboardType(@PassByValue @CppType("finroc::util::TypedClass<T>") Class<T> clazz) {
+    public static <T> DataTypeBase registerBlackboardType(Class<T> clazz) {
         return registerBlackboardType(clazz, clazz.getSimpleName());
     }
 }

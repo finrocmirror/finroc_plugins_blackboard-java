@@ -21,17 +21,6 @@
  */
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.annotation.AtFront;
-import org.rrlib.finroc_core_utils.jc.annotation.ConstMethod;
-import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
-import org.rrlib.finroc_core_utils.jc.annotation.Friend;
-import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
-import org.rrlib.finroc_core_utils.jc.annotation.IncludeClass;
-import org.rrlib.finroc_core_utils.jc.annotation.Init;
-import org.rrlib.finroc_core_utils.jc.annotation.Inline;
-import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
-import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
-import org.rrlib.finroc_core_utils.jc.annotation.SharedPtr;
 import org.rrlib.finroc_core_utils.log.LogLevel;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
@@ -44,15 +33,12 @@ import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.std.PortBase;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * This is the base class for a blackboard client
  */
-@Friend(BlackboardClient.class)
-@IncludeClass( {MemoryBuffer.class, AbstractBlackboardServer.class})
 public class RawBlackboardClient extends FrameworkElement { /*implements ReturnHandler*/
 
-    @AtFront
     /** Special blackboard client read port - when connected, connect write port also */
     public class ReadPort extends PortBase {
 
@@ -82,7 +68,6 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         }
     }
 
-    @AtFront
     /** Special blackboard client write port - when connected, connect read port also */
     public class WritePort extends InterfaceClientPort {
 
@@ -115,25 +100,8 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     /** Default network timeout (added to any other timeouts for network calls) */
     public static final int NET_TIMEOUT = 1000;
 
-    /*Cpp
-
-    //Pointers to methods to use
-    template <typename T>
-    static int8 callIsSingleBuffered(WritePort* port) {
-        return AbstractBlackboardServer<T>::IS_SINGLE_BUFFERED.call(*port, NET_TIMEOUT);
-    }
-
-    template <typename T>
-    static void callKeepAlive(WritePort* port, int lockid) {
-        AbstractBlackboardServer<T>::KEEP_ALIVE.call(*port, lockid, false);
-    }
-
-    _int8 (*isSingleBufferedFunc)(WritePort*);
-    _void (*keepAliveFunc)(WritePort*, int);
-     */
-
     /** Interface port for write access */
-    protected @SharedPtr WritePort writePort;
+    protected WritePort writePort;
 
     /** Port for reading */
     protected ReadPort readPort;
@@ -159,7 +127,6 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     protected final int autoConnectCategory;
 
     /** Default PortCreationInfo for Blackboard clients (creates both read write ports) */
-    @JavaOnly
     private static PortCreationInfo defaultPci = new PortCreationInfo(MemoryBuffer.TYPE, PortFlags.EMITS_DATA | PortFlags.ACCEPTS_DATA);
 
     /** Are we client of a SingleBuffered blackboard */
@@ -169,9 +136,6 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     /**
      * @return Default ProtCreationInfo for Blackboard clients (creates both read write ports)
      */
-    @InCpp( {"static core::PortCreationInfo defaultPci(rrlib::serialization::MemoryBuffer::TYPE, core::PortFlags::EMITS_DATA | core::PortFlags::ACCEPTS_DATA);",
-             "return defaultPci;"
-            })
     public static PortCreationInfo getDefaultPci() {
         return defaultPci;
     }
@@ -182,12 +146,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
      * @param autoConnect Auto-Connect blackboard client to matching server?
      * @param autoConnectCategory If auto-connect is active: Limit auto-connecting to a specific blackboard category? (-1 is no)
      */
-    @Inline
-    @Init( {"writePort(pci.getFlag(core::PortFlags::EMITS_DATA) ? AbstractBlackboardServerRaw::getBlackboardTypeInfo(pci.dataType)->blackboardType) : NULL)",
-            "isSingleBufferedFunc(_M_callIsSingleBuffered<T>)",
-            "keepAliveFunc(_M_callKeepAlive<T>)"
-           })
-    <T> RawBlackboardClient(PortCreationInfo pci, @Ptr T t, @CppDefault("true") boolean autoConnect, @CppDefault("-1") int autoConnectCategory) {
+    <T> RawBlackboardClient(PortCreationInfo pci, T t, boolean autoConnect, int autoConnectCategory) {
         super(pci.parent, pci.name);
         AbstractBlackboardServerRaw.checkType(pci.dataType);
         readPort = pci.getFlag(PortFlags.ACCEPTS_DATA) ? new ReadPort(new PortCreationInfo("read", this, pci.dataType.getListType(), PortFlags.ACCEPTS_DATA | (pci.flags & PortFlags.PUSH_STRATEGY))) : null;
@@ -196,7 +155,6 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         this.autoConnectCategory = autoConnectCategory;
     }
 
-    @JavaOnly
     public RawBlackboardClient(PortCreationInfo pci) {
         this(pci, null, true, -1);
     }
@@ -259,7 +217,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
      *
      * @return Is client connected to blackboard server?
      */
-    @ConstMethod public boolean isConnected() {
+    public boolean isConnected() {
         boolean w = (writePort == null) ? true : writePort.isConnected();
         return w && readPort.isConnected();
     }
@@ -290,7 +248,6 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
             return;
         }
         try {
-            @InCpp("int8 result = (*isSingleBufferedFunc)(write_port._get());")
             Byte result = AbstractBlackboardServer.IS_SINGLE_BUFFERED.call(writePort, NET_TIMEOUT);
             serverBuffers = (result == 0) ? ServerBuffers.MULTI : ServerBuffers.SINGLE;
         } catch (MethodCallException e) {
@@ -310,7 +267,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         return lockType != LockType.NONE;
     }
 
-    public @Ptr WritePort getWritePort() {
+    public WritePort getWritePort() {
         return writePort;
     }
 

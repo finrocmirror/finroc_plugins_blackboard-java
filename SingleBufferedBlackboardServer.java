@@ -23,17 +23,6 @@ package org.finroc.plugins.blackboard;
 
 import org.rrlib.finroc_core_utils.jc.AtomicInt;
 import org.rrlib.finroc_core_utils.jc.Time;
-import org.rrlib.finroc_core_utils.jc.annotation.CppDefault;
-import org.rrlib.finroc_core_utils.jc.annotation.CppType;
-import org.rrlib.finroc_core_utils.jc.annotation.HAppend;
-import org.rrlib.finroc_core_utils.jc.annotation.InCpp;
-import org.rrlib.finroc_core_utils.jc.annotation.Init;
-import org.rrlib.finroc_core_utils.jc.annotation.JavaOnly;
-import org.rrlib.finroc_core_utils.jc.annotation.PassLock;
-import org.rrlib.finroc_core_utils.jc.annotation.Ptr;
-import org.rrlib.finroc_core_utils.jc.annotation.RawTypeArgs;
-import org.rrlib.finroc_core_utils.jc.annotation.Ref;
-import org.rrlib.finroc_core_utils.jc.annotation.SkipArgs;
 import org.rrlib.finroc_core_utils.log.LogLevel;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.rrlib.finroc_core_utils.serialization.PortDataList;
@@ -51,41 +40,25 @@ import org.finroc.core.port.std.PullRequestHandler;
 import org.finroc.core.portdatabase.FinrocTypeInfo;
 
 /**
- * @author max
+ * @author Max Reichardt
  *
  * This is the base class for a blackboard server
  */
-@Ptr
-@SuppressWarnings( {"rawtypes", "unchecked"}) @RawTypeArgs
-@HAppend( {
-    "extern template class SingleBufferedBlackboardServer<BlackboardBuffer>;",
-    "extern template class SingleBufferedBlackboardServer<rrlib::serialization::MemoryBuffer>;"
-})
+@SuppressWarnings( {"rawtypes", "unchecked"})
 public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<T> implements PullRequestHandler {
-
-    /*Cpp
-    typedef typename AbstractBlackboardServer<T>::BBVector BBVector;
-    typedef typename AbstractBlackboardServer<T>::BBVectorVar BBVectorVar;
-    typedef typename AbstractBlackboardServer<T>::ConstBBVectorVar ConstBBVectorVar;
-    typedef typename AbstractBlackboardServer<T>::ChangeTransaction ChangeTransaction;
-    typedef typename AbstractBlackboardServer<T>::ChangeTransactionVar ChangeTransactionVar;
-    typedef typename AbstractBlackboardServer<T>::ConstChangeTransactionVar ConstChangeTransactionVar;
-
-    using AbstractBlackboardServer<T>::logDomain;
-    */
 
     /** Unlock timeout in ms - if no keep-alive signal occurs in this period of time */
     private final static long UNLOCK_TIMEOUT = 1000;
 
     /** Interface port for write access */
-    @Ptr private InterfaceServerPort write;
+    private InterfaceServerPort write;
 
     /**
      * this is the one and only blackboard buffer
      * (can be replaced, when new buffers arrive from network => don't store pointers to it, when not locked)
      * (has exactly one lock)
      */
-    private @CppType("BBVectorVar") PortDataList buffer;
+    private PortDataList buffer;
 
     /**
      * Is blackboard currently locked?
@@ -111,7 +84,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     private long revision;
 
     /** Current read copy of blackboard */
-    private @CppType("BBVectorVar") PortDataList readCopy;
+    private PortDataList readCopy;
 
     /** revision of read copy */
     private long readCopyRevision = -1;
@@ -126,8 +99,6 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      * @param name Name/Uid of blackboard
      * @param type Data Type of blackboard content
      */
-    @JavaOnly
-    @SkipArgs("2")
     public SingleBufferedBlackboardServer(String name, DataTypeBase type) {
         this(name, 0, null, type);
     }
@@ -138,9 +109,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      * @param parent of BlackboardServer
      * @param type Data Type of blackboard content
      */
-    @JavaOnly
-    @SkipArgs("4")
-    public SingleBufferedBlackboardServer(String name, int elements, @CppDefault("NULL") FrameworkElement parent, DataTypeBase type) {
+    public SingleBufferedBlackboardServer(String name, int elements, FrameworkElement parent, DataTypeBase type) {
         this(name, elements, parent, true, type);
     }
 
@@ -153,9 +122,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      * @param shared Share blackboard with other runtime environments?
      * @param type Data Type of blackboard content
      */
-    @SkipArgs("7")
-    @Init("buffer(write->getBufferForReturn<BBVector>())")
-    public SingleBufferedBlackboardServer(String name, int capacity, int elements, int elemSize, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+    public SingleBufferedBlackboardServer(String name, int capacity, int elements, int elemSize, FrameworkElement parent, boolean shared, DataTypeBase type) {
         super(name, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
         assert(!FinrocTypeInfo.isMethodType(type)) : "Please provide data type of content here";
         readPortRaw = new BBReadPort(new PortCreationInfo("read", this, type.getListType(), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
@@ -180,9 +147,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      * @param shared Share blackboard with other runtime environments?
      * @param type Data Type of blackboard content
      */
-    @SkipArgs("5")
-    @Init("buffer(write->getBufferForReturn<BBVector>())")
-    public SingleBufferedBlackboardServer(String name, @CppDefault("0") int elements, @CppDefault("NULL") FrameworkElement parent, @CppDefault("true") boolean shared, @CppDefault("rrlib::serialization::DataType<T>()") DataTypeBase type) {
+    public SingleBufferedBlackboardServer(String name, int elements, FrameworkElement parent, boolean shared, DataTypeBase type) {
         super(name, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
         assert(!FinrocTypeInfo.isMethodType(type)) : "Please provide data type of content here";
         readPortRaw = new BBReadPort(new PortCreationInfo("read", this, type.getListType(), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1));
@@ -192,40 +157,31 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
         writePortRaw = write;
         buffer = write.getBufferForReturn(readPortRaw.getDataType());
 
-        //JavaOnlyBlock
         resize(buffer, elements, elements);
-
-        //Cpp resize(*buffer, elements, elements);
-
         BlackboardManager.getInstance().init();
     }
 
     /**
      * @return Port data manager for buffer
      */
-    @InCpp("return t.getManager();")
-    private static @Ptr <Q> PortDataManager getManager(@Ref @CppType("core::PortDataPtr<Q>") Q t) {
+    private static <Q> PortDataManager getManager(Q t) {
         return PortDataManager.getManager(t);
     }
 
     public void delete() {
-
-        //JavaOnlyBlock
         if (readCopy != null) {
             getManager(readCopy).releaseLock();
             readCopy = null;
         }
 
         assert(buffer != null);
-
-        //JavaOnlyBlock
         getManager(buffer).releaseLock();
         buffer = null;
 
     }
 
     @Override
-    protected void asynchChange(@CppType("ConstChangeTransactionVar") PortDataList buf, int index, int offset, boolean checkLock) {
+    protected void asynchChange(PortDataList buf, int index, int offset, boolean checkLock) {
         synchronized (bbLock) {
             if (checkLock && isLocked()) {
                 checkCurrentLock();
@@ -236,15 +192,9 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             }
 
             assert((!checkLock) || (!isLocked()));
-
-            //JavaOnlyBlock
             applyAsynchChange(buffer, buf, index, offset);
-
-            //Cpp this->applyAsynchChange(*buffer, buf, index, offset);
-
             //buffer.getBuffer().put(offset, buf.getBuffer(), 0, buf.getSize());
 
-            //JavaOnlyBlock
             getManager(buf).releaseLock();
 
             // commit changes
@@ -264,22 +214,17 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     }
 
     /** Check if lock timed out (only call in synchronized/exclusive access context) */
-    @PassLock("bbLock")
     private void checkCurrentLock() {
         if (isLocked() && Time.getCoarse() > lastKeepAlive + UNLOCK_TIMEOUT) {
             log(LogLevel.LL_DEBUG, logDomain, "Blackboard server: Lock timed out... unlocking");
 
             // meh... we have a read or write lock... so a client may make changes to it... or may still read it... it's safer to create new buffer here
-            @InCpp("BBVectorVar newBuffer = write->getBufferForReturn<BBVector>();")
             PortDataList newBuffer = write.getBufferForReturn(readPortRaw.getDataType());
 
             //JavaOnlyBlock
             this.copyBlackboardBuffer(buffer, newBuffer);
             getManager(buffer).releaseLock();
             buffer = newBuffer;
-
-            //Cpp this->copyBlackboardBuffer(*buffer, *newBuffer);
-            //Cpp buffer = std::_move(newBuffer);
 
             newBufferRevision(true);
             locks = 0;
@@ -291,7 +236,6 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
         }
     }
 
-    @PassLock("bbLock")
     private void newBufferRevision(boolean hasChanges) {
         lockId = lockIDGen.incrementAndGet();
         if (hasChanges) {
@@ -307,7 +251,6 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 
     @Override
     protected boolean isLocked() {
-        //Cpp assert(buffer._get() != NULL && buffer.getManager() != NULL);
         return locks != 0;
     }
 
@@ -317,7 +260,6 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
      *
      * @param minRevision minimal revision we want to receive
      */
-    @PassLock("bbLock")
     private void waitForReadCopy(long minRevision, long timeout) {
         long curTime = Time.getCoarse();
         while (readCopyRevision < minRevision) {
@@ -337,26 +279,19 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     /**
      * Make a copy for the read port - and hand it to anyone who is interested
      */
-    @PassLock("bbLock")
     private void updateReadCopy() {
         assert(getManager(buffer).isLocked());
 
         if (readCopyRevision < revision) {
 
-            //JavaOnlyBlock
             // release lock of old read buffer
             if (readCopy != null) {
                 getManager(readCopy).releaseLock();
             }
 
             // copy current buffer
-
-            //JavaOnlyBlock
             readCopy = write.getBufferForReturn(readPortRaw.getDataType());
             this.copyBlackboardBuffer(buffer, readCopy);
-
-            //Cpp readCopy = write->getBufferForReturn<BBVector>();
-            //Cpp this->copyBlackboardBuffer(*buffer, *read_copy);
 
             PortDataManager copymgr = getManager(readCopy);
             copymgr.lockID = -1;
@@ -414,7 +349,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     }
 
     @Override
-    protected void directCommit(@CppType("BBVectorVar") PortDataList newBuffer) {
+    protected void directCommit(PortDataList newBuffer) {
         if (newBuffer == null) {
             return;
         }
@@ -424,11 +359,8 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             // note: current lock is obsolete, since we have a completely new buffer
             assert(newBuffer != buffer);
 
-            //JavaOnlyBlock
             getManager(buffer).releaseLock();
             buffer = newBuffer;
-
-            //Cpp buffer = std::_move(newBuffer);
 
             // Clear any asynch change commands from queue, since they were for old buffer
             this.clearAsyncChangeTasks();
@@ -446,7 +378,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     }
 
     @Override
-    protected @CppType("AbstractBlackboardServer<T>::ConstBBVectorVar") PortDataList readLock(long timeout) throws MethodCallException {
+    protected PortDataList readLock(long timeout) throws MethodCallException {
         synchronized (bbLock) {
             return readLockImpl(timeout);
         }
@@ -455,8 +387,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     /**
      * Helper method for above to avoid nested/double lock
      */
-    @PassLock("bbLock")
-    private @CppType("AbstractBlackboardServer<T>::ConstBBVectorVar") PortDataList readLockImpl(long timeout) throws MethodCallException {
+    private PortDataList readLockImpl(long timeout) throws MethodCallException {
 
         // Read Lock
         long currentRevision = revision;
@@ -464,11 +395,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             checkCurrentLock();
             if (locks < 0 && currentRevision != readCopyRevision) {
                 if (timeout <= 0) {
-
-                    //JavaOnlyBlock
                     return null; // we do not need to enqueue lock commands with zero timeout
-
-                    //Cpp return ConstBBVectorVar(); // we do not need to enqueue lock commands with zero timeout
                 }
                 waitForReadCopy(currentRevision, timeout);
                 assert(readCopyRevision >= currentRevision);
@@ -478,11 +405,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
         if (readCopyRevision >= currentRevision) {
             // there's a copy... use this
             getManager(readCopy).addLock();
-
-            //JavaOnlyBlock
             return readCopy;
-
-            //Cpp return ConstBBVectorVar(getManager(readCopy));
         }
 
         if (locks >= 0) {
@@ -491,11 +414,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
                 updateReadCopy();
                 assert(readCopyRevision >= currentRevision);
                 getManager(readCopy).addLock();
-
-                //JavaOnlyBlock
                 return readCopy;
-
-                //Cpp return ConstBBVectorVar(getManager(readCopy));
             } else { // no one waiting... simply lock buffer
                 if (locks == 0) { // if this is the first lock: increment and set lock id of buffer
                     int lockIDNew = lockIDGen.incrementAndGet();
@@ -504,11 +423,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
                 }
                 locks++;
                 getManager(buffer).addLock();
-
-                //JavaOnlyBlock
                 return buffer;
-
-                //Cpp return ConstBBVectorVar(getManager(buffer));
             }
         }
 
@@ -565,26 +480,18 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 //    }
 
     @Override
-    protected @CppType("AbstractBlackboardServer<T>::BBVectorVar")PortDataList writeLock(long timeout) {
+    protected PortDataList writeLock(long timeout) {
         synchronized (bbLock) {
             if (isLocked() || this.pendingTasks()) {
                 checkCurrentLock();
                 if (isLocked() || this.pendingTasks()) {
                     if (timeout <= 0) {
-
-                        //JavaOnlyBlock
                         return null; // we do not need to enqueue lock commands with zero timeout
-
-                        //Cpp return BBVectorVar(); // we do not need to enqueue lock commands with zero timeout
                     } else {
                         // wait for lock
                         boolean haveLock = this.waitForLock(timeout);
                         if (!haveLock) {
-
-                            //JavaOnlyBlock
                             return null; // we didn't get lock :-/
-
-                            //Cpp return BBVectorVar(); // we didn't get lock :-/
                         }
                     }
                 }
@@ -601,11 +508,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
             lastKeepAlive = lockTime;
 
             getManager(buffer).addLock();
-
-            //JavaOnlyBlock
             return buffer;
-
-            //Cpp return BBVectorVar(getManager(buffer));
         }
     }
 
@@ -623,7 +526,6 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     /**
      * Helper method for above to avoid nested/double lock
      */
-    @PassLock("bbLock")
     private void readUnlockImpl(int lockId) throws MethodCallException {
         if (lockId < 0) {
             return; // not interested, since it's a copy
@@ -645,7 +547,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
     }
 
     @Override
-    protected void writeUnlock(@CppType("BBVectorVar")PortDataList buf) {
+    protected void writeUnlock(PortDataList buf) {
         if (buf == null) {
             log(LogLevel.LL_WARNING, logDomain, "blackboard write unlock without providing buffer - you shouldn't do that - ignoring");
             return;
@@ -656,10 +558,7 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
         synchronized (bbLock) {
             if (this.lockId != bufmgr.lockID) {
                 log(LogLevel.LL_DEBUG, logDomain, "Skipping outdated unlock");
-
-                //JavaOnlyBlock
                 bufmgr.releaseLock();
-
                 return;
             }
 
@@ -668,7 +567,6 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
 
             lockId = lockIDGen.incrementAndGet();
 
-            //JavaOnlyBlock
             if (buf == buffer) {
                 // we got the same buffer back - we only need to release one lock from method call
                 bufmgr.releaseLock();
@@ -677,15 +575,6 @@ public class SingleBufferedBlackboardServer<T> extends AbstractBlackboardServer<
                 buffer = buf;
                 assert(getManager(buffer).isLocked());
             }
-
-            /*Cpp
-            if (buf != buffer) {
-                buffer = std::_move(buf);
-                assert(getManager(buffer)->isLocked());
-            } else {
-                buf._reset();
-            }
-             */
 
             locks = 0;
             newBufferRevision(true);
