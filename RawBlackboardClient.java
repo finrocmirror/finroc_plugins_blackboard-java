@@ -27,9 +27,6 @@ import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.port.AbstractPort;
 import org.finroc.core.port.PortCreationInfo;
-import org.finroc.core.port.PortFlags;
-import org.finroc.core.port.rpc.InterfaceClientPort;
-import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.std.PortBase;
 
 /**
@@ -47,8 +44,8 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         }
 
         @Override
-        protected void newConnection(AbstractPort partner) {
-            super.newConnection(partner);
+        protected void connectionAdded(AbstractPort partner, boolean partnerIsDestination) {
+            super.connectionAdded(partner, partnerIsDestination);
             if (writePort != null) {
                 FrameworkElement w = partner.getParent().getChild("write");
                 if (w != null) {
@@ -63,7 +60,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         }
 
         @Override
-        protected void connectionRemoved(AbstractPort partner) {
+        protected void connectionRemoved(AbstractPort partner, boolean partnerIsDestination) {
             serverBuffers = ServerBuffers.UNKNOWN;
         }
     }
@@ -76,8 +73,8 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         }
 
         @Override
-        protected void newConnection(AbstractPort partner) {
-            super.newConnection(partner);
+        protected void connectionAdded(AbstractPort partner, boolean partnerIsDestination) {
+            super.connectionAdded(partner, partnerIsDestination);
             if (readPort != null) {
                 FrameworkElement w = partner.getParent().getChild("read");
                 if (w != null) {
@@ -92,7 +89,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
         }
 
         @Override
-        protected void connectionRemoved(AbstractPort partner) {
+        protected void connectionRemoved(AbstractPort partner, boolean partnerIsDestination) {
             serverBuffers = ServerBuffers.UNKNOWN;
         }
     }
@@ -127,7 +124,7 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     protected final int autoConnectCategory;
 
     /** Default PortCreationInfo for Blackboard clients (creates both read write ports) */
-    private static PortCreationInfo defaultPci = new PortCreationInfo(MemoryBuffer.TYPE, PortFlags.EMITS_DATA | PortFlags.ACCEPTS_DATA);
+    private static PortCreationInfo defaultPci = new PortCreationInfo(MemoryBuffer.TYPE, Flag.EMITS_DATA | Flag.ACCEPTS_DATA);
 
     /** Are we client of a SingleBuffered blackboard */
     protected enum ServerBuffers { UNKNOWN, MULTI, SINGLE }
@@ -149,8 +146,8 @@ public class RawBlackboardClient extends FrameworkElement { /*implements ReturnH
     <T> RawBlackboardClient(PortCreationInfo pci, T t, boolean autoConnect, int autoConnectCategory) {
         super(pci.parent, pci.name);
         AbstractBlackboardServerRaw.checkType(pci.dataType);
-        readPort = pci.getFlag(PortFlags.ACCEPTS_DATA) ? new ReadPort(new PortCreationInfo("read", this, pci.dataType.getListType(), PortFlags.ACCEPTS_DATA | (pci.flags & PortFlags.PUSH_STRATEGY))) : null;
-        writePort = pci.getFlag(PortFlags.EMITS_DATA) ? new WritePort(AbstractBlackboardServer.getBlackboardTypeInfo(pci.dataType).blackboardType) : null ;
+        readPort = pci.getFlag(Flag.ACCEPTS_DATA) ? new ReadPort(new PortCreationInfo("read", this, pci.dataType.getListType(), Flag.ACCEPTS_DATA | (pci.flags & Flag.PUSH_STRATEGY))) : null;
+        writePort = pci.getFlag(Flag.EMITS_DATA) ? new WritePort(AbstractBlackboardServer.getBlackboardTypeInfo(pci.dataType).blackboardType) : null ;
         this.autoConnect = autoConnect;
         this.autoConnectCategory = autoConnectCategory;
     }

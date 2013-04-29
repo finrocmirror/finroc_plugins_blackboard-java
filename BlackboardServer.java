@@ -26,12 +26,10 @@ import org.rrlib.finroc_core_utils.jc.Time;
 import org.rrlib.finroc_core_utils.log.LogLevel;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.rrlib.finroc_core_utils.serialization.PortDataList;
-import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;
 import org.finroc.core.port.Port;
 import org.finroc.core.port.PortCreationInfo;
-import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfaceServerPort;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.std.PortBase;
@@ -116,12 +114,12 @@ public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
     public BlackboardServer(String name, int elements, FrameworkElement parent, boolean shared, DataTypeBase type) {
         super(name, shared ? BlackboardManager.SHARED : BlackboardManager.LOCAL, parent);
         assert(!FinrocTypeInfo.isMethodType(type)) : "Please provide data type of content here";
-        PortCreationInfo readPci = new PortCreationInfo("read", this, this.getBlackboardMethodType(type), PortFlags.OUTPUT_PORT | (shared ? CoreFlags.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1);
+        PortCreationInfo readPci = new PortCreationInfo("read", this, this.getBlackboardMethodType(type), Flag.OUTPUT_PORT | (shared ? Flag.SHARED : 0)).lockOrderDerive(LockOrderLevels.REMOTE_PORT + 1);
 
         readPort = new Port<PortDataList>(readPci);
         readPortRaw = (PortBase)readPort.getWrapped();
         AbstractBlackboardServerRaw.checkType(type);
-        write = new InterfaceServerPort("write", this, AbstractBlackboardServerRaw.getBlackboardTypeInfo(type).blackboardType, this, shared ? CoreFlags.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
+        write = new InterfaceServerPort("write", this, AbstractBlackboardServerRaw.getBlackboardTypeInfo(type).blackboardType, this, shared ? Flag.SHARED : 0, LockOrderLevels.REMOTE_PORT + 2);
         writePortRaw = write;
         locked = null;
         setPublished(readPort.getDefaultBuffer());

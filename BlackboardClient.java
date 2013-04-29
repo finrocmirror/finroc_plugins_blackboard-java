@@ -27,8 +27,8 @@ import org.rrlib.finroc_core_utils.log.LogLevel;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.rrlib.finroc_core_utils.serialization.PortDataList;
 import org.finroc.core.FrameworkElement;
+import org.finroc.core.FrameworkElementFlags;
 import org.finroc.core.port.PortCreationInfo;
-import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.MethodCallException;
 import org.finroc.core.port.std.PortDataManager;
 
@@ -72,8 +72,11 @@ public class BlackboardClient<T> {
      * @param writePort Create write port?
      * @param type Data Type of blackboard content
      */
-    public BlackboardClient(String name, FrameworkElement parent, boolean pushUpdates, boolean autoConnect, int autoConnectCategory, boolean readPort, boolean writePort, DataTypeBase type) {
-        wrapped = new RawBlackboardClient(new PortCreationInfo(name, parent, initBlackboardType(type), (writePort ? PortFlags.EMITS_DATA : 0) | (readPort ? PortFlags.ACCEPTS_DATA : 0) | (pushUpdates ? PortFlags.PUSH_STRATEGY : 0)), (T)null, autoConnect, autoConnectCategory);
+    public BlackboardClient(String name, FrameworkElement parent, boolean pushUpdates, boolean autoConnect, int autoConnectCategory,
+                            boolean readPort, boolean writePort, DataTypeBase type) {
+        wrapped = new RawBlackboardClient(new PortCreationInfo(name, parent, initBlackboardType(type),
+                                          (writePort ? FrameworkElementFlags.EMITS_DATA : 0) | (readPort ? FrameworkElementFlags.ACCEPTS_DATA : 0) | (pushUpdates ? FrameworkElementFlags.PUSH_STRATEGY : 0)),
+                                          (T)null, autoConnect, autoConnectCategory);
     }
 
     /**
@@ -390,7 +393,7 @@ public class BlackboardClient<T> {
      */
     public boolean hasChanged() {
         assert(wrapped.getReadPort() != null);
-        if (!wrapped.getReadPort().getFlag(PortFlags.PUSH_STRATEGY)) {
+        if (!wrapped.getReadPort().getFlag(FrameworkElementFlags.PUSH_STRATEGY)) {
             logDomain.log(LogLevel.LL_DEBUG_WARNING, getLogDescription(), "This method only works properly, when push strategy is used.");
         }
         return wrapped.getReadPort().hasChanged();
@@ -403,7 +406,7 @@ public class BlackboardClient<T> {
      */
     public void resetChanged() {
         assert(wrapped.getReadPort() != null);
-        if (!wrapped.getReadPort().getFlag(PortFlags.PUSH_STRATEGY)) {
+        if (!wrapped.getReadPort().getFlag(FrameworkElementFlags.PUSH_STRATEGY)) {
             logDomain.log(LogLevel.LL_DEBUG_WARNING, getLogDescription(), "This method only works properly, when push strategy is used.");
         }
         wrapped.getReadPort().resetChanged();

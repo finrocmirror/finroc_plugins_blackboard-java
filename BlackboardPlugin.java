@@ -26,7 +26,6 @@ import org.rrlib.finroc_core_utils.rtti.DataType;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
 import org.finroc.core.plugin.Plugin;
-import org.finroc.core.portdatabase.RPCInterfaceType;
 
 /**
  * @author Max Reichardt
@@ -35,20 +34,11 @@ import org.finroc.core.portdatabase.RPCInterfaceType;
  */
 public class BlackboardPlugin implements Plugin {
 
-//  /** Marks copy-on-write blackboard server ports */
-//  public static int SINGLE_BUFFERED = PortFlags.FIRST_CUSTOM_PORT_FLAG;
-
-    /** Reusable blackboard tasks */
-    static ReusablesPoolCR<BlackboardTask> taskPool;
-
     public static DataTypeBase BB_MEM_BUFFER = registerBlackboardType(MemoryBuffer.class);
     public static DataTypeBase BB_BLACKBOARD_BUFFER = registerBlackboardType(BlackboardBuffer.class);
 
     @Override
     public void init(/*PluginManager mgr*/) {
-//        taskPool = new ReusablesPoolCR<BlackboardTask>();
-//        AutoDeleter.addStatic(taskPool);
-
         @SuppressWarnings("unused")
         DataTypeBase x = BlackboardBuffer.TYPE;
     }
@@ -95,7 +85,8 @@ public class BlackboardPlugin implements Plugin {
         DataTypeBase dtbb = DataTypeBase.findType(bb_name);
         if (dtbb == null) {
 
-            RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.getBlackboardInterface());
+            //throw new RuntimeException("TODO");
+            /*RPCInterfaceType rpct = new RPCInterfaceType(bb_name, AbstractBlackboardServer.getBlackboardInterface());
             dtbb = rpct;
 
             // add annotation to element type
@@ -106,7 +97,7 @@ public class BlackboardPlugin implements Plugin {
             // add annotation to blackboard type
             BlackboardTypeInfo btibb = new BlackboardTypeInfo();
             btibb.elementType = dt;
-            dtbb.addAnnotation(btibb);
+            dtbb.addAnnotation(btibb);*/
         }
 
         return dtbb;

@@ -31,19 +31,15 @@ import org.rrlib.finroc_core_utils.log.LogLevel;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;
-import org.finroc.core.port.rpc.InterfacePort;
-import org.finroc.core.port.rpc.MethodCallException;
-import org.finroc.core.port.rpc.method.AbstractMethod;
-import org.finroc.core.port.rpc.method.Method0Handler;
-import org.finroc.core.port.rpc.method.Void1Handler;
 import org.finroc.core.port.std.PortBase;
 import org.finroc.core.portdatabase.FinrocTypeInfo;
+import org.finroc.plugins.rpc_ports.internal.RPCPort;
 
 /**
  * Abstract base class of all blackboard servers
  */
 @SuppressWarnings("rawtypes")
-abstract class AbstractBlackboardServerRaw extends FrameworkElement implements Void1Handler, Method0Handler<Byte> {
+abstract class AbstractBlackboardServerRaw extends FrameworkElement {
 
     /** Lock for blackboard operation (needs to be deeper than runtime - (for initial pushes etc.)) */
     public MutexLockOrderWithMonitor bbLock = new MutexLockOrderWithMonitor(LockOrderLevels.INNER_MOST - 1000);
@@ -52,7 +48,7 @@ abstract class AbstractBlackboardServerRaw extends FrameworkElement implements V
     public PortBase readPortRaw;
 
     /** write port */
-    public InterfacePort writePortRaw;
+    public RPCPort writePortRaw;
 
     /** Category index of Blackboard category that this server belongs to (see constants in BlackboardManager) */
     public final int categoryIndex;

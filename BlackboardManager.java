@@ -26,7 +26,6 @@ import org.rrlib.finroc_core_utils.jc.container.SafeConcurrentlyIterableList;
 import org.rrlib.finroc_core_utils.jc.container.SimpleListWithMutex;
 import org.rrlib.finroc_core_utils.jc.thread.ThreadUtil;
 import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
-import org.finroc.core.CoreFlags;
 import org.finroc.core.FrameworkElement;
 import org.finroc.core.LockOrderLevels;
 import org.finroc.core.RuntimeEnvironment;
@@ -34,7 +33,6 @@ import org.finroc.core.RuntimeListener;
 import org.finroc.core.plugin.Plugins;
 import org.finroc.core.port.AbstractPort;
 import org.finroc.core.port.PortCreationInfo;
-import org.finroc.core.port.PortFlags;
 import org.finroc.core.port.rpc.InterfacePort;
 import org.finroc.core.port.std.PortBase;
 import org.finroc.core.thread.CoreLoopThreadBase;
@@ -142,9 +140,9 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
 
     private BlackboardManager() {
         super(RuntimeEnvironment.getInstance(), NAME);
-        categories[LOCAL] = new BlackboardCategory("Local", CoreFlags.ALLOWS_CHILDREN);
-        categories[SHARED] = new BlackboardCategory("Shared", CoreFlags.ALLOWS_CHILDREN | CoreFlags.SHARED | CoreFlags.GLOBALLY_UNIQUE_LINK);
-        categories[REMOTE] = new BlackboardCategory("Remote", CoreFlags.ALLOWS_CHILDREN | CoreFlags.NETWORK_ELEMENT);
+        categories[LOCAL] = new BlackboardCategory("Local", 0);
+        categories[SHARED] = new BlackboardCategory("Shared", Flag.SHARED | Flag.GLOBALLY_UNIQUE_LINK);
+        categories[REMOTE] = new BlackboardCategory("Remote", Flag.NETWORK_ELEMENT);
         LockCheckerThread checker = new LockCheckerThread();
         ThreadUtil.setAutoDelete(checker);
         checker.start();
@@ -282,7 +280,7 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
         if (changeType == RuntimeListener.ADD /*|| changeType == RuntimeListener.REMOVE || changeType == RuntimeListener.PRE_INIT*/) {
 
             // Is this a remote blackboard? -> Create proxy
-            if (element.getFlag(PortFlags.NETWORK_ELEMENT) && element.getFlag(PortFlags.IS_PORT) && (!element.isChildOf(this))) {
+            if (element.getFlag(Flag.NETWORK_ELEMENT) && element.getFlag(Flag.PORT) && (!element.isChildOf(this))) {
                 element.getQualifiedLink(tempBuffer);
                 String qname = tempBuffer.toString();
                 String name = getBlackboardNameFromQualifiedLink(tempBuffer.toString());
@@ -299,12 +297,12 @@ public class BlackboardManager extends FrameworkElement implements RuntimeListen
                     }
                     if (read && info.readPortRaw == null) {
                         PortBase port = (PortBase)element;
-                        info.readPortRaw = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), PortFlags.OUTPUT_PROXY | CoreFlags.NETWORK_ELEMENT));
+                        info.readPortRaw = new PortBase(new PortCreationInfo(READ_PORT_NAME, info, port.getDataType(), Flag.OUTPUT_PROXY | Flag.NETWORK_ELEMENT));
                         info.init();
                         info.readPortRaw.connectTo(qname, AbstractPort.ConnectDirection.TO_SOURCE, false);
                     } else if (write && info.writePortRaw == null) {
                         InterfacePort port = (InterfacePort)element;
-                        info.writePortRaw = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing, PortFlags.NETWORK_ELEMENT);
+                        info.writePortRaw = new InterfacePort(WRITE_PORT_NAME, info, port.getDataType(), InterfacePort.Type.Routing, Flag.NETWORK_ELEMENT);
                         info.init();
                         info.writePortRaw.connectTo(qname, AbstractPort.ConnectDirection.TO_TARGET, false);
                     }
