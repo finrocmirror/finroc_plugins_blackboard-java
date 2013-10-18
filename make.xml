@@ -1,5 +1,5 @@
 <targets>
-  <finrocplugin name="blackboard" libs="finroc_core.jar" plugin-class="org.finroc.plugins.blackboard.BlackboardPlugin">
+  <finrocplugin libs="finroc_core.jar" plugin-class="org.finroc.plugins.blackboard.BlackboardPlugin">
     <sources>
       BlackboardBuffer.java
       BlackboardPlugin.java
