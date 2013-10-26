@@ -41,7 +41,7 @@ import org.finroc.core.portdatabase.FinrocTypeInfo;
  *
  * This is the base class for a blackboard server
  */
-@SuppressWarnings( {"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class BlackboardServer<T> extends AbstractBlackboardServer<T> {
 
     /** Unlock timeout in ms - if no keep-alive signal occurs in this period of time */

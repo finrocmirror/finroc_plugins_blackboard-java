@@ -37,7 +37,7 @@ import org.finroc.core.port.std.PortDataManager;
  *
  * This is the base class for a blackboard client
  */
-@SuppressWarnings( {"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class BlackboardClient<T> {
 
     /** Wrapped raw blackboard client */
