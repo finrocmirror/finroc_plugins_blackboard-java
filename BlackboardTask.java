@@ -23,7 +23,7 @@ package org.finroc.plugins.blackboard;
 
 import org.finroc.core.port.std.PortDataManager;
 import org.rrlib.finroc_core_utils.jc.container.Reusable;
-import org.rrlib.finroc_core_utils.serialization.PortDataList;
+import org.rrlib.serialization.PortDataList;
 
 /**
  * @author Max Reichardt

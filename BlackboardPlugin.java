@@ -22,9 +22,9 @@
 package org.finroc.plugins.blackboard;
 
 import org.rrlib.finroc_core_utils.jc.container.ReusablesPoolCR;
-import org.rrlib.finroc_core_utils.rtti.DataType;
-import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
-import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
+import org.rrlib.serialization.MemoryBuffer;
+import org.rrlib.serialization.rtti.DataType;
+import org.rrlib.serialization.rtti.DataTypeBase;
 import org.finroc.core.plugin.Plugin;
 
 /**

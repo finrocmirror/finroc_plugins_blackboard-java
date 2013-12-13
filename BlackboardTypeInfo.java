@@ -21,8 +21,8 @@
 //----------------------------------------------------------------------
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.rtti.DataTypeAnnotation;
-import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
+import org.rrlib.serialization.rtti.DataTypeAnnotation;
+import org.rrlib.serialization.rtti.DataTypeBase;
 
 /**
  * @author Max Reichardt

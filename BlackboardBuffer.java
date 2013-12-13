@@ -21,11 +21,11 @@
 //----------------------------------------------------------------------
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.rtti.DataType;
-import org.rrlib.finroc_core_utils.rtti.DataTypeBase;
-import org.rrlib.finroc_core_utils.serialization.InputStreamBuffer;
-import org.rrlib.finroc_core_utils.serialization.MemoryBuffer;
-import org.rrlib.finroc_core_utils.serialization.OutputStreamBuffer;
+import org.rrlib.serialization.BinaryInputStream;
+import org.rrlib.serialization.BinaryOutputStream;
+import org.rrlib.serialization.MemoryBuffer;
+import org.rrlib.serialization.rtti.DataType;
+import org.rrlib.serialization.rtti.DataTypeBase;
 
 /**
  * @author Max Reichardt
@@ -47,7 +47,7 @@ public class BlackboardBuffer extends MemoryBuffer {
     public final static DataTypeBase TYPE = new DataType<BlackboardBuffer>(BlackboardBuffer.class);
 
     @Override
-    public void deserialize(InputStreamBuffer is) {
+    public void deserialize(BinaryInputStream is) {
         //lockID = is.readInt();
         bbCapacity = is.readInt();
         elements = is.readInt();
@@ -56,7 +56,7 @@ public class BlackboardBuffer extends MemoryBuffer {
     }
 
     @Override
-    public void serialize(OutputStreamBuffer os) {
+    public void serialize(BinaryOutputStream os) {
         //os.writeInt(lockID);
         os.writeInt(bbCapacity);
         os.writeInt(elements);
