@@ -21,9 +21,7 @@
 //----------------------------------------------------------------------
 package org.finroc.plugins.blackboard;
 
-import org.rrlib.finroc_core_utils.jc.container.ReusablesPoolCR;
 import org.rrlib.serialization.MemoryBuffer;
-import org.rrlib.serialization.rtti.DataType;
 import org.rrlib.serialization.rtti.DataTypeBase;
 import org.finroc.core.plugin.Plugin;
 
@@ -34,31 +32,13 @@ import org.finroc.core.plugin.Plugin;
  */
 public class BlackboardPlugin implements Plugin {
 
-    public static DataTypeBase BB_MEM_BUFFER = registerBlackboardType(MemoryBuffer.class);
-    public static DataTypeBase BB_BLACKBOARD_BUFFER = registerBlackboardType(BlackboardBuffer.class);
+    public static DataTypeBase BB_MEM_BUFFER = registerBlackboardType(MemoryBuffer.TYPE);
+    public static DataTypeBase BB_BLACKBOARD_BUFFER = registerBlackboardType(BlackboardBuffer.TYPE);
 
     @Override
     public void init(/*PluginManager mgr*/) {
         @SuppressWarnings("unused")
         DataTypeBase x = BlackboardBuffer.TYPE;
-    }
-
-    /**
-     * Registers blackboard data type
-     * (actually two: one for buffer and one for method calls)
-     *
-     * @param clazz Type
-     * @param name Blackboard buffer type name
-     * @return Blackboard buffer type
-     */
-    public static <T> DataTypeBase registerBlackboardType(Class<T> clazz, String name) {
-        DataTypeBase dt = DataTypeBase.findType(clazz);
-
-        if (dt == null) {
-            dt = new DataType<T>(clazz, name);
-        }
-
-        return BlackboardPlugin.<T>registerBlackboardType(dt, name);
     }
 
     /**
@@ -101,16 +81,5 @@ public class BlackboardPlugin implements Plugin {
         }
 
         return dtbb;
-    }
-
-    /**
-     * Registers blackboard data type
-     * (actually two: one for buffer and one for method calls)
-     *
-     * @param clazz Type
-     * @return Blackboard buffer type
-     */
-    public static <T> DataTypeBase registerBlackboardType(Class<T> clazz) {
-        return registerBlackboardType(clazz, clazz.getSimpleName());
     }
 }
