@@ -1,8 +1,8 @@
 <targets>
-  <finrocplugin plugin-class="org.finroc.plugins.blackboard.BlackboardPlugin">
+  <library plugin-class="org.finroc.plugins.blackboard.BlackboardPlugin">
     <sources>
       BlackboardBuffer.java
       BlackboardPlugin.java
     </sources>
-  </finrocplugin>
+  </library>
 </targets>
